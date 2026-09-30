@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Garden - 영단어 암기장</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f7f7fb;color:#252535}
+button,input{font:inherit}
+button{cursor:pointer;border:0}
+.app{max-width:980px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.logo{font-size:25px;font-weight:800}
+.logo span{color:#7568e8}
+.card{background:#fff;border:1px solid #e9e8f0;border-radius:20px;padding:25px;box-shadow:0 5px 20px rgba(40,35,80,.05)}
+.hidden{display:none!important}
+h1,h2,h3,p{margin-top:0}
+.muted{color:#77778a}
+.btn{padding:11px 17px;border-radius:12px;background:#eeeef5;color:#333;font-weight:700}
+.btn.primary{background:#7568e8;color:#fff}
+.btn.danger{background:#fff0f0;color:#d84b4b}
+.btn.small{padding:8px 12px;font-size:14px}
+input{width:100%;padding:13px 14px;border:1px solid #dcdbe6;border-radius:11px;outline:none;background:#fff}
+input:focus{border-color:#7568e8;box-shadow:0 0 0 3px rgba(117,104,232,.12)}
+input[type="checkbox"]:focus{box-shadow:none}
+label{font-weight:700;font-size:14px;display:block;margin-bottom:8px}
+.row{display:flex;gap:10px;align-items:center}
+.row>*{flex:1}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px}
+.toolbar .actions{display:flex;gap:8px}
+.book-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.book{padding:20px;border:1px solid #e9e8f0;border-radius:16px;background:#fff;transition:.15s}
+.book:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(40,35,80,.07)}
+.book h3{margin-bottom:7px}
+.book .count{font-size:14px;color:#888}
+.empty{text-align:center;padding:55px 20px;color:#888}
+.form-stack{display:grid;gap:17px}
+.word-progress{font-size:14px;color:#777;margin-bottom:18px}
+.added-words{margin-top:25px;border-top:1px solid #eee;padding-top:18px}
+.word-row{display:flex;justify-content:space-between;gap:15px;padding:12px 0;border-bottom:1px solid #f0eff4}
+.word-row strong{display:block}.word-row span{color:#777;font-size:14px}
+.word-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.word-card{padding:20px;border:1px solid #e9e8f0;border-radius:16px;background:#fff}
+.word-card{position:relative}
+.card-menu-wrap{position:absolute;top:12px;right:12px}
+.card-menu-btn{width:34px;height:34px;border-radius:10px;background:#f2f1f7;color:#555;font-size:21px;line-height:1}
+.card-menu{position:absolute;right:0;top:40px;min-width:145px;background:#fff;border:1px solid #e5e3ed;border-radius:12px;box-shadow:0 10px 28px rgba(40,35,80,.14);padding:6px;z-index:20}
+.card-menu button{display:block;width:100%;text-align:left;padding:10px 11px;background:transparent;border-radius:8px;color:#333;font-weight:600}
+.card-menu button:hover{background:#f4f3f9}
+.card-menu .menu-danger{color:#d84b4b}
+.card-fav{font-size:15px;margin-top:12px;color:#7568e8;font-weight:700}
+.book.favorite-book{background:#fffaf0;border-color:#ead8a7}
+.book.favorite-book h3{color:#9a6d16}
+.book.favorite-book .count{color:#a08042}
+.book.favorite-book .openBook{background:#c99b38}
+.search-row{display:flex;gap:9px;margin-bottom:14px}
+.search-row input{flex:1}
+.select-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.select-tools .btn{padding:8px 12px;font-size:14px}
+@media(max-width:600px){.search-row{width:100%}.search-row input{min-width:0}}
+
+.word-card .en{font-weight:800;font-size:21px;margin-bottom:7px}
+.word-card .ko{color:#686878}
+.quiz-wrap{max-width:650px;margin:0 auto}
+.quiz-top{display:flex;justify-content:space-between;color:#777;font-size:14px;margin-bottom:12px}
+.quiz-card{text-align:center;padding:48px 28px}
+.meaning{font-size:28px;font-weight:800;margin:20px 0 28px;line-height:1.35}
+.quiz-input{font-size:20px;text-align:center}
+.result-score{text-align:center;padding:28px}
+.score{font-size:46px;font-weight:900;color:#7568e8}
+.result-section{margin-top:22px}
+.result-section h3{font-size:16px}
+.result-item{padding:12px 14px;border-radius:11px;margin:7px 0;background:#f5f5fa;display:flex;justify-content:space-between;gap:10px}
+.correct{border-left:4px solid #57a56a}
+.wrong{border-left:4px solid #df6464}
+.notice{background:#f2f0ff;color:#5c50bd;padding:13px 15px;border-radius:12px;margin-bottom:18px;font-size:14px}
+.modal-backdrop{position:fixed;inset:0;background:rgba(20,18,35,.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000}.modal{width:min(460px,100%);background:#fff;border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(20,18,35,.22)}.modal h2{margin-bottom:18px}.modal .field{margin-bottom:15px}.modal-actions{display:flex;gap:9px;margin-top:20px}.modal-actions button{flex:1}.select-action{grid-column:1/-1}.select-mode-actions{margin-top:18px;width:100%}
+@media(max-width:600px){.app{padding:18px 14px 40px}.toolbar{align-items:flex-start;flex-direction:column}.toolbar .actions{width:100%}.toolbar .actions button{flex:1}.meaning{font-size:24px}.quiz-card{padding:35px 18px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">Word <span>Garden</span> 🌱</div>
+  <button class="btn" id="homeBtn">내 단어장</button>
+</header>
+
+<section id="home" class="view">
+  <div class="toolbar">
+    <div><h1>내 단어장</h1><p class="muted">외우고 싶은 단어를 직접 등록해보세요.</p></div>
+    <button class="btn primary" id="newBookBtn">＋ 새 단어장</button>
+  </div>
+  <div id="bookList" class="book-list"></div>
+</section>
+
+<section id="create" class="view hidden">
+  <div class="toolbar">
+    <div><h1>새 단어장 만들기</h1><p class="muted">단어와 뜻을 하나씩 등록하세요.</p></div>
+    <button class="btn" id="cancelCreate">취소</button>
+  </div>
+  <div class="card">
+    <div class="form-stack">
+      <div>
+        <label>단어장 이름</label>
+        <input id="bookName" placeholder="예: 수능 필수 영단어">
+      </div>
+      <div id="wordForm">
+        <div class="row">
+          <div><label>영단어</label><input id="wordInput" placeholder="abandon" autocomplete="off" autocapitalize="none" spellcheck="false" lang="en" inputmode="latin"></div>
+          <div><label>뜻</label><input id="meaningInput" placeholder="버리다, 포기하다" autocomplete="off" lang="ko" inputmode="text"></div>
+        </div>
+        <button class="btn primary" id="addWordBtn" style="margin-top:14px;width:100%">다음 단어 등록</button>
+      </div>
+    </div>
+    <div class="added-words">
+      <h3>등록한 단어 <span id="draftCount">(0)</span></h3>
+      <div id="draftWords" class="muted">아직 등록한 단어가 없어요.</div>
+    </div>
+    <button class="btn primary" id="finishBookBtn" style="width:100%;margin-top:20px" disabled>단어장 만들기</button>
+  </div>
+</section>
+
+<section id="book" class="view hidden">
+  <div class="toolbar">
+    <div><h1 id="bookTitle"></h1><p class="muted" id="bookMeta"></p></div>
+    <div class="actions">
+      <button class="btn" id="backBooks">목록</button>
+      <button class="btn" id="addToBook">＋ 단어 추가</button>
+      <button class="btn" id="selectWords">☑ 단어 선택</button>
+      <button class="btn primary" id="startQuiz">🎯 퀴즈 맞추기</button>
+    </div>
+  </div>
+  <div class="search-row"><input id="wordSearch" placeholder="🔍 단어 또는 뜻 검색" autocomplete="off"></div>
+  <div id="selectTools" class="select-tools hidden">
+    <button class="btn" id="selectAll">☑ 전체 선택</button>
+    <button class="btn danger" id="deleteSelected">🗑 선택한 단어 삭제</button>
+  </div>
+  <div id="words" class="word-cards"></div>
+</section>
+
+<section id="quiz" class="view hidden">
+  <div class="quiz-wrap">
+    <div class="toolbar"><div><h1>퀴즈</h1><p class="muted" id="quizBookName"></p></div><button class="btn" id="quitQuiz">나가기</button></div>
+    <div class="quiz-top"><span id="quizProgress"></span><span id="quizScore"></span></div>
+    <div class="card quiz-card">
+      <div class="muted">다음 뜻에 해당하는 영단어를 입력하세요</div>
+      <div class="meaning" id="quizMeaning"></div>
+      <input class="quiz-input" id="quizInput" placeholder="영단어를 입력하세요" autocomplete="off">
+      <button class="btn primary" id="submitAnswer" style="width:100%;margin-top:14px">정답 확인</button>
+    </div>
+    <div id="answerNotice" class="notice hidden" style="margin-top:15px"></div>
+  </div>
+</section>
+
+<section id="result" class="view hidden">
+  <div class="quiz-wrap">
+    <div class="toolbar"><div><h1>퀴즈 결과</h1><p class="muted" id="resultBook"></p></div></div>
+    <div class="card result-score">
+      <div class="muted">최종 점수</div>
+      <div class="score" id="scoreText"></div>
+      <p id="scoreMessage" class="muted"></p>
+      <div class="row" style="margin-top:18px">
+        <button class="btn" id="retryWrong">오답만 다시 풀기</button>
+        <button class="btn primary" id="retryAll">전체 다시 풀기</button>
+      </div>
+    </div>
+    <div class="result-section">
+      <h3>✅ 맞은 단어</h3><div id="correctList"></div>
+    </div>
+    <div class="result-section">
+      <h3>❌ 틀린 단어</h3><div id="wrongList"></div>
+    </div>
+    <button class="btn" id="resultHome" style="width:100%;margin-top:22px">단어장으로 돌아가기</button>
+  </div>
+</section>
+</div>
+
+<div id="modalRoot" class="hidden"></div>
+
+<script>
+const KEY='wordGardenBooks_v1';
+let books=JSON.parse(localStorage.getItem(KEY)||'[]');
+let draft=[];
+let currentBook=null;
+let quizItems=[];
+let quizIndex=0;
+let quizResults=[];
+let answerLocked=false;
+
+const $=id=>document.getElementById(id);
+function save(){localStorage.setItem(KEY,JSON.stringify(books))}
+function show(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
+  $(id).classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+function getFavoriteWords(){
+  const out=[];
+  books.forEach(b=>b.words.forEach((w,i)=>{if(w.favorite)out.push({...w,sourceBookId:b.id,sourceIndex:i})}));
+  return out;
+}
+function renderBooks(){
+  const box=$('bookList');
+  const favs=getFavoriteWords();
+  const favCard=`<div class="book favorite-book" data-favorite-book="true">
+    <h3>⭐ 즐겨찾기</h3>
+    <div class="count">${favs.length}개 단어</div>
+    <div style="display:flex;gap:8px;margin-top:16px"><button class="btn primary small openFavorites">열어보기</button></div>
+  </div>`;
+  const normal=books.map(b=>`<div class="book" data-id="${b.id}">
+      <h3>${esc(b.name)}</h3><div class="count">${b.words.length}개 단어</div>
+      <div style="display:flex;gap:8px;margin-top:16px"><button class="btn primary small openBook">열어보기</button><button class="btn danger small deleteBook">삭제</button></div>
+    </div>`).join('');
+  box.innerHTML=favCard+normal;
+  box.querySelector('.openFavorites').onclick=()=>{currentBook={id:'__favorites__',name:'⭐ 즐겨찾기',words:getFavoriteWords(),isFavorites:true};selectingWords=false;searchTerm='';renderBook();show('book')};
+  box.querySelectorAll('.openBook').forEach(btn=>btn.onclick=e=>{currentBook=books.find(b=>b.id===+e.target.closest('.book').dataset.id);selectingWords=false;searchTerm='';renderBook();show('book')});
+  box.querySelectorAll('.deleteBook').forEach(btn=>btn.onclick=e=>{
+    e.preventDefault(); e.stopPropagation();
+    const id=Number(e.currentTarget.closest('.book').dataset.id);
+    const book=books.find(b=>b.id===id);
+    if(!book)return;
+    openConfirmModal('단어장 삭제','정말로 삭제할까요?',`「${book.name}」 단어장이 삭제됩니다. 이 작업은 되돌릴 수 없어요.`,()=>{
+      books=books.filter(b=>b.id!==id);
+      save();
+      if(currentBook && !currentBook.isFavorites && currentBook.id===id){
+        currentBook=null; selectingWords=false; selectedIndices.clear(); searchTerm='';
+        show('home');
+      }
+      renderBooks();
+    });
+  });
+}
+
+function renderDraft(){
+  $('draftCount').textContent=`(${draft.length})`;
+  $('draftWords').innerHTML=draft.length?draft.map((w,i)=>`
+    <div class="word-row"><div><strong>${esc(w.word)}</strong><span>${esc(w.meaning)}</span></div>
+    <button class="btn danger small" onclick="removeDraft(${i})">삭제</button></div>`).join(''):'<span class="muted">아직 등록한 단어가 없어요.</span>';
+  $('finishBookBtn').disabled=!(draft.length && $('bookName').value.trim());
+}
+function removeDraft(i){draft.splice(i,1);renderDraft()}
+function startCreate(){
+  addingToBook=false; draft=[];
+  $('bookName').value=''; $('bookName').readOnly=false;
+  $('wordInput').value=''; $('meaningInput').value='';
+  $('finishBookBtn').textContent='단어장 만들기';
+  renderDraft(); show('create'); $('bookName').focus();
+}
+function startAddToBook(){
+  if(!currentBook)return;
+  addingToBook=true; draft=[];
+  $('bookName').value=currentBook.name; $('bookName').readOnly=true;
+  $('wordInput').value=''; $('meaningInput').value='';
+  $('finishBookBtn').textContent='단어 추가 완료';
+  renderDraft(); show('create'); $('wordInput').focus();
+}
+$('bookName').addEventListener('input',renderDraft);
+$('newBookBtn').onclick=startCreate;
+$('cancelCreate').onclick=()=>{if(addingToBook&&currentBook){addingToBook=false;$('bookName').readOnly=false;renderBook();show('book');}else{addingToBook=false;renderBooks();show('home')}};
+$('homeBtn').onclick=()=>{renderBooks();show('home')};
+
+function addWord(){
+  const word=$('wordInput').value.trim(), meaning=$('meaningInput').value.trim();
+  if(!word||!meaning){alert('영단어와 뜻을 둘 다 입력해주세요!');return}
+  draft.push({word,meaning});$('wordInput').value='';$('meaningInput').value='';renderDraft();$('wordInput').focus();
+}
+$('addWordBtn').onclick=addWord;
+$('wordInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault(); $('meaningInput').focus();}
+});
+$('meaningInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault(); addWord();}
+});
+$('finishBookBtn').onclick=()=>{
+  if(!draft.length){
+    if(addingToBook){ addingToBook=false; $('bookName').readOnly=false; renderBook(); show('book'); }
+    return;
+  }
+  if(addingToBook){
+    currentBook.words.push(...draft);
+    save(); draft=[]; addingToBook=false;
+    $('bookName').readOnly=false;
+    renderBook(); show('book');
+    return;
+  }
+  const name=$('bookName').value.trim();
+  if(!name)return;
+  const b={id:Date.now(),name,words:[...draft]};
+  books.push(b);save();currentBook=b;draft=[];renderBook();show('book');
+};
+
+let selectingWords=false;
+
+function closeModal(){ $('modalRoot').classList.add('hidden'); $('modalRoot').innerHTML=''; }
+function openConfirmModal(title,message,detail,onConfirm){
+  const root=$('modalRoot');
+  root.classList.remove('hidden');
+  root.innerHTML=`<div class="modal-backdrop"><div class="modal" role="dialog" aria-modal="true">
+    <h2>${esc(title)}</h2>
+    <p style="font-size:18px;font-weight:700;margin-bottom:8px">${esc(message)}</p>
+    <p class="muted" style="line-height:1.6">${esc(detail)}</p>
+    <div class="modal-actions"><button class="btn" id="confirmCancel">취소</button><button class="btn danger" id="confirmDelete">🗑 삭제</button></div>
+  </div></div>`;
+  $('confirmCancel').onclick=closeModal;
+  $('confirmDelete').onclick=()=>{onConfirm();closeModal();};
+  root.querySelector('.modal-backdrop').onclick=e=>{if(e.target===e.currentTarget)closeModal()};
+  document.addEventListener('keydown',function escConfirm(e){if(e.key==='Escape'){closeModal();document.removeEventListener('keydown',escConfirm)}});
+}
+function openModal(title, fields, onSubmit){
+  const root=$('modalRoot');
+  root.classList.remove('hidden');
+  root.innerHTML=`<div class="modal-backdrop"><div class="modal" role="dialog" aria-modal="true">
+    <h2>${esc(title)}</h2>
+    ${fields.map((f,i)=>`<div class="field"><label>${esc(f.label)}</label><input id="modalField${i}" value="${esc(f.value||'')}" placeholder="${esc(f.placeholder||'')}" autocomplete="off"></div>`).join('')}
+    <div class="modal-actions"><button class="btn" id="modalCancel">취소</button><button class="btn primary" id="modalSubmit">확인</button></div>
+  </div></div>`;
+  $('modalCancel').onclick=closeModal;
+  $('modalSubmit').onclick=()=>{const vals=fields.map((_,i)=>$('modalField'+i).value.trim()); if(onSubmit(vals)!==false) closeModal();};
+  root.querySelector('.modal-backdrop').onclick=e=>{if(e.target===e.currentTarget)closeModal()};
+  setTimeout(()=>$('modalField0')?.focus(),30);
+  fields.forEach((_,i)=>$('modalField'+i).addEventListener('keydown',e=>{if(e.key==='Enter')$('modalSubmit').click();if(e.key==='Escape')closeModal()}));
+}
+
+let searchTerm='';
+let selectedIndices=new Set();
+
+function currentVisibleEntries(){
+  const term=searchTerm.trim().toLowerCase();
+  const source=currentBook?.isFavorites?getFavoriteWords():currentBook?.words||[];
+  return source.map((w,i)=>({w,i})).filter(x=>!term || x.w.word.toLowerCase().includes(term) || x.w.meaning.toLowerCase().includes(term));
+}
+function updateSelectAllButton(){
+  const btn=$('selectAll');
+  if(!btn)return;
+  const visible=currentVisibleEntries().map(x=>x.i);
+  const all=visible.length>0 && visible.every(i=>selectedIndices.has(i));
+  btn.textContent=all?'☐ 전체 해제':'☑ 전체 선택';
+  btn.disabled=visible.length===0;
+}
+function renderBook(){
+  if(!currentBook)return;
+  $('bookTitle').textContent=currentBook.name;
+  const entries=currentVisibleEntries();
+  const total=currentBook.isFavorites?getFavoriteWords().length:currentBook.words.length;
+  $('bookMeta').textContent=`총 ${total}개의 단어${searchTerm?` · ${entries.length}개 검색됨`:''}`;
+  $('wordSearch').value=searchTerm;
+  $('selectWords').textContent=selectingWords?'선택 완료':'☑ 단어 선택';
+  $('selectTools').classList.toggle('hidden',!selectingWords);
+  if(selectingWords) $('bookMeta').textContent=`총 ${total}개의 단어${searchTerm?` · ${entries.length}개 검색됨`:''} · 선택할 단어를 고르세요`;
+  $('words').innerHTML=entries.length ? entries.map(({w,i})=>{
+    const checked=selectingWords && selectedIndices.has(i);
+    return `<div class="word-card" data-word-index="${i}">
+      ${selectingWords?`<label style="display:flex;align-items:center;gap:9px;margin-bottom:13px;font-weight:600;cursor:pointer"><input type="checkbox" class="word-check" data-index="${i}" ${checked?'checked':''} style="width:18px;height:18px;accent-color:#7568e8"> 선택</label>`:''}
+      <div class="card-menu-wrap"><button class="card-menu-btn" data-menu="${i}" aria-label="단어 메뉴">⋮</button><div class="card-menu hidden" data-menu-panel="${i}">
+        <button class="favoriteAction" data-index="${i}">${w.favorite?'★ 즐겨찾기 해제':'☆ 즐겨찾기 추가'}</button>
+        ${currentBook.isFavorites?'':`<button class="editWord" data-index="${i}">✏️ 편집</button>`}
+        <button class="deleteWord menu-danger" data-index="${i}">${currentBook.isFavorites?'🗑 즐겨찾기에서 삭제':'🗑 삭제'}</button>
+      </div></div>
+      <div class="en">${esc(w.word)}</div><div class="ko">${esc(w.meaning)}</div>
+      ${w.favorite?'<div class="card-fav">⭐ 즐겨찾기</div>':''}
+    </div>`;
+  }).join('') : '<div class="card empty" style="grid-column:1/-1">'+(searchTerm?'검색 결과가 없어요.':'아직 단어가 없어요.')+'</div>';
+  updateSelectAllButton();
+}
+function getSourceEntry(index){
+  if(!currentBook)return null;
+  if(currentBook.isFavorites){
+    const favs=getFavoriteWords(), entry=favs[index];
+    if(!entry)return null;
+    const source=books.find(b=>b.id===entry.sourceBookId);
+    if(!source || !source.words[entry.sourceIndex])return null;
+    return {word:source.words[entry.sourceIndex],source,index};
+  }
+  if(!currentBook.words[index])return null;
+  return {word:currentBook.words[index],source:currentBook,index};
+}
+function toggleFavorite(index){
+  const entry=getSourceEntry(index);
+  if(!entry)return;
+  entry.word.favorite=!entry.word.favorite;
+  save();
+  renderBooks();
+  renderBook();
+}
+function editWord(index){
+  if(currentBook.isFavorites)return;
+  const entry=getSourceEntry(index); if(!entry)return;
+  const w=entry.word;
+  openModal('단어 카드 편집',[{label:'영단어',value:w.word},{label:'뜻',value:w.meaning}],vals=>{
+    const [word,meaning]=vals;
+    if(!word||!meaning){alert('영단어와 뜻을 둘 다 입력해주세요!');return false;}
+    w.word=word; w.meaning=meaning;
+    save();renderBook();
+  });
+}
+function deleteWord(index){
+  const entry=getSourceEntry(index);
+  if(!entry)return;
+  const word=entry.word;
+  openConfirmModal(
+    '단어 삭제',
+    '정말로 삭제할까요?',
+    currentBook.isFavorites
+      ? `「${word.word}」을(를) 즐겨찾기에서 삭제합니다.`
+      : `「${word.word}」 — ${word.meaning} 단어가 삭제됩니다. 이 작업은 되돌릴 수 없어요.`,
+    ()=>{
+      // 확인 버튼을 눌렀을 때만 실제 데이터에서 삭제
+      if(currentBook.isFavorites){
+        word.favorite=false;
+      }else{
+        currentBook.words.splice(index,1);
+      }
+      save();
+      selectedIndices.clear();
+      renderBooks();
+      renderBook();
+    }
+  );
+}
+$('backBooks').onclick=()=>{selectingWords=false;selectedIndices.clear();searchTerm='';renderBooks();show('home')};
+$('addToBook').onclick=startAddToBook;
+$('wordSearch').addEventListener('input',e=>{searchTerm=e.target.value;renderBook()});
+$('words').addEventListener('click',e=>{
+  const menuBtn=e.target.closest('.card-menu-btn');
+  if(menuBtn){document.querySelectorAll('.card-menu').forEach(m=>m.classList.add('hidden'));const panel=menuBtn.parentElement.querySelector('.card-menu');panel.classList.toggle('hidden');return;}
+  const fav=e.target.closest('.favoriteAction');if(fav){toggleFavorite(+fav.dataset.index);return;}
+  const edit=e.target.closest('.editWord');if(edit){editWord(+edit.dataset.index);return;}
+  const del=e.target.closest('.deleteWord');if(del){e.preventDefault();e.stopPropagation();deleteWord(Number(del.dataset.index));return;}
+  const check=e.target.closest('.word-check');if(check){const i=+check.dataset.index;if(check.checked)selectedIndices.add(i);else selectedIndices.delete(i);updateSelectAllButton();return;}
+});
+document.addEventListener('click',e=>{if(!e.target.closest('.card-menu-wrap'))document.querySelectorAll('.card-menu').forEach(m=>m.classList.add('hidden'))});
+$('selectWords').onclick=()=>{
+  if(selectingWords){
+    if(!selectedIndices.size){selectingWords=false;selectedIndices.clear();renderBook();return;}
+    makeSelectedBook();
+    return;
+  }
+  selectingWords=true;selectedIndices.clear();renderBook();
+};
+$('selectAll').onclick=()=>{
+  if(!selectingWords)return;
+  const visible=currentVisibleEntries().map(x=>x.i);
+  if(!visible.length)return;
+  const all=visible.every(i=>selectedIndices.has(i));
+  if(all) visible.forEach(i=>selectedIndices.delete(i));
+  else visible.forEach(i=>selectedIndices.add(i));
+  renderBook();
+};
+$('deleteSelected').onclick=(e)=>{e.preventDefault();e.stopPropagation();
+  if(!selectingWords)return;
+  const ids=[...selectedIndices].filter(i=>Number.isInteger(i));
+  if(!ids.length){alert('삭제할 단어를 선택해주세요!');return;}
+  const count=ids.length;
+  openConfirmModal(
+    '단어 삭제',
+    '정말로 삭제할까요?',
+    currentBook.isFavorites
+      ? `선택한 ${count}개의 단어를 즐겨찾기에서 삭제합니다.`
+      : `선택한 ${count}개의 단어가 삭제됩니다. 이 작업은 되돌릴 수 없어요.`,
+    ()=>{
+      if(currentBook.isFavorites){
+        const favs=getFavoriteWords();
+        ids.sort((a,b)=>b-a).forEach(i=>{
+          const entry=favs[i];
+          const source=entry&&books.find(b=>b.id===entry.sourceBookId);
+          if(source&&source.words[entry.sourceIndex]) source.words[entry.sourceIndex].favorite=false;
+        });
+      }else{
+        ids.sort((a,b)=>b-a).forEach(i=>{if(currentBook.words[i])currentBook.words.splice(i,1)});
+      }
+      save();
+      selectedIndices.clear();
+      selectingWords=false;
+      renderBooks();
+      renderBook();
+    }
+  );
+};
+function makeSelectedBook(){
+  const ids=[...selectedIndices].sort((a,b)=>a-b);
+  if(!ids.length){alert('새 단어장으로 만들 단어를 하나 이상 선택해주세요!');return;}
+  const selected=ids.map(i=>currentBook.isFavorites?getFavoriteWords()[i]:currentBook.words[i]).filter(Boolean);
+  openModal('새 단어장 만들기',[{label:'단어장 이름',value:`${currentBook.name} - 선택 단어`,placeholder:'예: 시험 대비 단어'}],vals=>{
+    const name=vals[0];if(!name){alert('단어장 이름을 입력해주세요!');return false;}
+    const newBook={id:Date.now(),name,words:selected.map(w=>({word:w.word,meaning:w.meaning,favorite:!!w.favorite}))};
+    books.push(newBook);save();currentBook=newBook;selectedIndices.clear();selectingWords=false;searchTerm='';renderBooks();renderBook();show('book');
+  });
+}
+
+function shuffle(arr){arr=[...arr];for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
+function beginQuiz(items){
+  if(!items.length){alert('퀴즈를 시작할 단어가 없어요!');return}
+  quizItems=shuffle(items);quizIndex=0;quizResults=[];answerLocked=false;
+  $('quizBookName').textContent=currentBook.name;
+  $('answerNotice').classList.add('hidden');show('quiz');renderQuestion();
+}
+function renderQuestion(){
+  const item=quizItems[quizIndex];
+  $('quizProgress').textContent=`${quizIndex+1} / ${quizItems.length}`;
+  $('quizScore').textContent=`현재 ${quizResults.filter(r=>r.correct).length}개 정답`;
+  $('quizMeaning').textContent=item.meaning;
+  $('quizInput').value='';$('quizInput').disabled=false;
+  $('submitAnswer').disabled=false;$('answerNotice').classList.add('hidden');answerLocked=false;
+  setTimeout(()=>$('quizInput').focus(),50);
+}
+function normalize(s){return s.trim().toLowerCase().replace(/\s+/g,' ')}
+function submit(){
+  if(answerLocked)return;
+  const item=quizItems[quizIndex], user=$('quizInput').value.trim();
+  if(!user){alert('영단어를 입력해주세요!');return}
+  const correct=normalize(user)===normalize(item.word);
+  quizResults.push({word:item.word,meaning:item.meaning,user,correct});
+  answerLocked=true;$('quizInput').disabled=true;$('submitAnswer').disabled=true;
+  const n=$('answerNotice');n.classList.remove('hidden');
+  n.innerHTML=correct?`✅ 정답이에요! <b>${esc(item.word)}</b>`:`❌ 오답이에요. 정답은 <b>${esc(item.word)}</b>`;
+  setTimeout(()=>{
+    quizIndex++;
+    if(quizIndex>=quizItems.length)showResult();else renderQuestion();
+  },850);
+}
+$('startQuiz').onclick=()=>beginQuiz(currentBook.words);
+$('submitAnswer').onclick=submit;
+$('quizInput').addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
+$('quitQuiz').onclick=()=>{renderBook();show('book')};
+
+function showResult(){
+  const correct=quizResults.filter(r=>r.correct), wrong=quizResults.filter(r=>!r.correct);
+  $('resultBook').textContent=currentBook.name;
+  $('scoreText').textContent=`${correct.length} / ${quizResults.length}`;
+  $('scoreMessage').textContent=correct.length===quizResults.length?'🎉 전부 맞혔어요!':`${wrong.length}개는 한 번 더 복습해봐요.`;
+  $('correctList').innerHTML=correct.length?correct.map(r=>`<div class="result-item correct"><span><b>${esc(r.word)}</b> — ${esc(r.meaning)}</span><span>✓</span></div>`).join(''):'<div class="muted">맞힌 단어가 없어요.</div>';
+  $('wrongList').innerHTML=wrong.length?wrong.map(r=>`<div class="result-item wrong"><span><b>${esc(r.word)}</b> — ${esc(r.meaning)}</span><span>내 답: ${esc(r.user)}</span></div>`).join(''):'<div class="muted">틀린 단어가 없어요. 완벽해요!</div>';
+  $('retryWrong').disabled=!wrong.length;
+  $('retryWrong').onclick=()=>beginQuiz(wrong.map(r=>({word:r.word,meaning:r.meaning})));
+  $('retryAll').onclick=()=>beginQuiz(currentBook.words);
+  $('resultHome').onclick=()=>{renderBook();show('book')};
+  show('result');
+}
+renderBooks();
+</script>
+</body>
+</html>
