@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome!</title>
+<style>
+  :root {
+    --bg: #121212;
+    --text: #f5f5f5;
+    --muted: #a8a8a8;
+    --line: #2b2b2b;
+    --input: #f4f4f4;
+    --input-text: #171717;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+
+  /* =========================
+     SIDEBAR (홈 화면과 동일)
+     ========================= */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(280px, 82vw);
+    height: 100vh;
+    background: #181818;
+    border-right: 1px solid #2b2b2b;
+    z-index: 20;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    padding: 24px 18px;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close {
+    width: 42px;
+    height: 42px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    cursor: pointer;
+    margin-bottom: 28px;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .sidebar-link:hover {
+    background: #222;
+  }
+
+  .home-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 15;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .sidebar-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .menu-button {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    width: 42px;
+    height: 42px;
+    padding: 8px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  .menu-button span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    margin: 5px auto;
+    background: var(--text);
+    border-radius: 2px;
+  }
+
+  /* Home을 누르면 생기는 박스 — 다른 곳을 누르면 사라짐 */
+  .sidebar-link.active {
+    background: #222;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+  }
+
+  main {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .welcome {
+    width: min(440px, 100%);
+    text-align: center;
+  }
+
+  h1 {
+    margin: 0 0 34px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(46px, 13vw, 70px);
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -2.5px;
+  }
+
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  input {
+    width: 100%;
+    height: 54px;
+    padding: 0 18px;
+    border: 1px solid #d8d8d8;
+    border-radius: 3px;
+    background: var(--input);
+    color: var(--input-text);
+    font-size: 16px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: normal;
+    outline: none;
+  }
+
+  input::placeholder {
+    color: #555;
+  }
+
+  input:focus {
+    border-color: white;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.12);
+  }
+
+  button[type="submit"] {
+    height: 50px;
+    border: 1px solid #555;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--text);
+    font-size: 15px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-style: normal;
+    cursor: pointer;
+  }
+
+  button[type="submit"]:active {
+    background: #222;
+  }
+
+  .message {
+    min-height: 20px;
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 14px;
+    font-style: normal;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .home {
+    text-align: center;
+  }
+
+  .home h2 {
+    margin: 0 0 10px;
+    font-size: 34px;
+    font-weight: 500;
+  }
+
+  .home p {
+    color: var(--muted);
+  }
+
+  /* 입력칸(enter your ID)과 로그인 후 화면(Welcome! / Logged in as)은 기본 시스템 폰트 */
+  input,
+  .home h2,
+  .home p {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  }
+
+  @media (max-width: 480px) {
+    .menu-button {
+      top: 12px;
+      left: 12px;
+    }
+
+    h1 {
+      margin-bottom: 28px;
+    }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<aside class="sidebar" id="sidebar" aria-label="Main menu">
+  <button class="sidebar-close" id="sidebarClose" type="button" aria-label="Close menu">×</button>
+
+  <nav class="sidebar-nav">
+    <button class="sidebar-link" type="button">
+      <svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1v-9.2Z"
+              fill="none" stroke="currentColor" stroke-width="1.7"
+              stroke-linejoin="round"/>
+      </svg>
+      <span>Home</span>
+    </button>
+  </nav>
+</aside>
+
+
+<button class="menu-button" type="button" aria-label="Menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+<main>
+  <section class="welcome" id="loginScreen">
+    <h1>Welcome!</h1>
+
+    <form class="login-form" id="loginForm">
+      <input
+        id="userId"
+        type="text"
+        placeholder="enter your ID"
+        autocomplete="username"
+        required
+      >
+      <button type="submit">ENTER</button>
+    </form>
+
+    <div class="message" id="message" aria-live="polite"></div>
+  </section>
+
+  <section class="home hidden" id="homeScreen">
+    <h2>Welcome!</h2>
+    <p id="loggedInAs"></p>
+  </section>
+</main>
+
+<script>
+  /*
+    지금은 테스트용으로 허용된 ID를 여기서 관리합니다.
+    나중에 실제 계정 시스템을 붙일 때 이 부분을 데이터베이스로 바꾸면 됩니다.
+  */
+  const allowedIDs = [
+    "echae",
+    "friend1",
+    "friend2",
+    "권은서",
+    "정수인",
+    "김서현",
+    "이선우",
+    "김현재",
+    "한경원"
+  ];
+
+  const loginScreen = document.getElementById("loginScreen");
+  const homeScreen = document.getElementById("homeScreen");
+  const loginForm = document.getElementById("loginForm");
+  const userIdInput = document.getElementById("userId");
+  const message = document.getElementById("message");
+  const loggedInAs = document.getElementById("loggedInAs");
+
+  // 로그인 판정 — 이 파일에는 로그인 처리 코드가 없어서,
+  // 처음 보내주신 파일(같은 ID 목록·같은 문구)의 로직을 사용
+  function tryLogin() {
+    const id = userIdInput.value.trim();
+
+    if (!id) return;
+
+    const matchedID = allowedIDs.find(
+      allowed => allowed.toLowerCase() === id.toLowerCase()
+    );
+
+    if (!matchedID) {
+      message.textContent = "This ID isn't registered.";
+      return;
+    }
+
+    message.textContent = "";
+    loginScreen.classList.add("hidden");
+    homeScreen.classList.remove("hidden");
+    loggedInAs.textContent = `Logged in as ${matchedID}`;
+  }
+
+  // 미리보기 화면 등 폼 제출이 막힌 환경에서도 작동하도록
+  // 폼 submit 대신 ENTER 버튼 클릭과 키보드 Enter로 직접 처리
+  loginForm.querySelector('button[type="submit"]').addEventListener("click", function(event) {
+    event.preventDefault();
+    tryLogin();
+  });
+
+  userIdInput.addEventListener("keydown", function(event) {
+    if (event.key === "Enter" && !event.isComposing) {
+      event.preventDefault();
+      tryLogin();
+    }
+  });
+
+  loginForm.addEventListener("submit", function(event) {
+    event.preventDefault();
+  });
+
+  const homeButton = document.querySelector(".sidebar-link");
+  const sidebar = document.getElementById("sidebar");
+  const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+  function openSidebar() {
+    sidebar.classList.add("open");
+    sidebarOverlay.classList.add("open");
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove("open");
+    sidebarOverlay.classList.remove("open");
+  }
+
+  document.querySelector(".menu-button").addEventListener("click", openSidebar);
+  document.getElementById("sidebarClose").addEventListener("click", closeSidebar);
+  sidebarOverlay.addEventListener("click", closeSidebar);
+
+  // Home: 박스 표시 후 홈 화면(LP) 파일로 이동
+  // 파일 이름이나 위치가 바뀌면 아래 경로만 수정하면 됩니다.
+  const HOME_URL = "home_tonearm_side.html";
+
+  homeButton.addEventListener("click", function() {
+    homeButton.classList.add("active");
+    window.location.href = HOME_URL;
+  });
+
+  // Home 버튼이 아닌 다른 곳을 누르면 박스가 사라짐
+  document.addEventListener("pointerdown", function(event) {
+    if (!event.target.closest(".sidebar-link")) {
+      homeButton.classList.remove("active");
+    }
+  });
+</script>
+
+</body>
+</html>
