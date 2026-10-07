@@ -381,9 +381,12 @@
 
   // Home: 박스 표시 후 홈 화면(LP) 파일로 이동
   // 파일 이름이나 위치가 바뀌면 아래 경로만 수정하면 됩니다.
-  const HOME_URL = "home_tonearm_side.html";
+  const HOME_URL = "Home.html";
 
   homeButton.addEventListener("click", function() {
+    // 로그인 후 화면(Logged in as)일 때만 작동
+    if (homeScreen.classList.contains("hidden")) return;
+
     homeButton.classList.add("active");
     window.location.href = HOME_URL;
   });
