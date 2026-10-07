@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home</title>
+<style>
+  :root {
+    --bg: #121212;
+    --text: #f5f5f5;
+    --muted: #a8a8a8;
+    --line: #2b2b2b;
+    --input: #f4f4f4;
+    --input-text: #171717;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: #0d0d0d;
+    color: #f5f5f5;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  body {
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+
+  .site-title {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    color: #fff;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.5px;
+  }
+
+  /* ───── 사이드바: friends_secret_site.html에서 그대로 복사 ───── */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(280px, 82vw);
+    height: 100vh;
+    background: #181818;
+    border-right: 1px solid var(--line);
+    z-index: 20;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    padding: 24px 18px;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close {
+    width: 42px;
+    height: 42px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    cursor: pointer;
+    margin-bottom: 28px;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .sidebar-link:hover {
+    background: #222;
+  }
+
+  .home-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 15;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .sidebar-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .menu-button {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    width: 42px;
+    height: 42px;
+    padding: 8px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  .menu-button span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    margin: 5px auto;
+    background: var(--text);
+    border-radius: 2px;
+  }
+
+  @media (max-width: 480px) {
+  
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(280px, 82vw);
+    height: 100vh;
+    background: #181818;
+    border-right: 1px solid var(--line);
+    z-index: 20;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    padding: 24px 18px;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close {
+    width: 42px;
+    height: 42px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    cursor: pointer;
+    margin-bottom: 28px;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .sidebar-link:hover {
+    background: #222;
+  }
+
+  .home-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 15;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .sidebar-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .menu-button {
+      top: 12px;
+      left: 12px;
+    }
+
+    h1 {
+      margin-bottom: 28px;
+    }
+  }
+  /* ───── 복사 끝 ───── */
+
+  .home-page {
+    position: fixed;
+    inset: 0;
+  }
+
+  .turntable-stage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(79.5vw, 67.7vh);  /* LP = 스테이지의 75% → 사진과 같은 크기 비율 */
+    aspect-ratio: 1;
+  }
+
+  /* LP */
+  .record {
+    position: absolute;
+    /* 스테이지(정사각형)의 75% 크기를 정중앙에 배치.
+       회전 애니메이션이 transform을 덮어쓰므로 translate 대신 inset으로 위치를 잡음 */
+    left: 12.5%;
+    top: 12.5%;
+    width: 75%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #080808;
+    box-shadow:
+      0 22px 55px rgba(0,0,0,.65),
+      inset 0 0 0 1px #303030;
+    overflow: hidden;
+    animation: spin 5s linear infinite;
+  }
+
+  /* LP 표면의 미세한 결 */
+  .record::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      repeating-radial-gradient(
+        circle at center,
+        transparent 0 2.4px,
+        rgba(255,255,255,.07) 3px,
+        transparent 3.6px 6px
+      );
+    opacity: .7;
+  }
+
+  /* 회전하면서 움직이는 빛 */
+  .record::after {
+    content: "";
+    position: absolute;
+    width: 150%;
+    height: 55%;
+    left: -25%;
+    top: -10%;
+    border-radius: 50%;
+    background: linear-gradient(
+      115deg,
+      transparent 0%,
+      transparent 37%,
+      rgba(255,255,255,.02) 43%,
+      rgba(255,255,255,.20) 49%,
+      rgba(255,255,255,.035) 54%,
+      transparent 62%,
+      transparent 100%
+    );
+    transform: rotate(-25deg);
+    filter: blur(4px);
+  }
+
+  /* 가운데 고정 원 */
+  .center-disc {
+    position: absolute;
+    z-index: 5;
+    width: 31%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #c7c7c7;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow:
+      0 4px 14px rgba(0,0,0,.45),
+      inset 0 0 0 1px rgba(255,255,255,.35);
+  }
+
+  .center-hole {
+    position: absolute;
+    z-index: 6;
+    width: 3.5%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #292929;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.5);
+  }
+
+  /* LP를 읽는 톤암 — 위에서 내려다본 형태 */
+  .tonearm {
+    position: absolute;
+    z-index: 20;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    filter: drop-shadow(0 6px 6px rgba(0,0,0,.55));
+  }
+
+  .tonearm-base { fill: #151515; stroke: #262626; stroke-width: .3; }
+  .tonearm-cap  { fill: url(#capMetal); stroke: #8a8a8a; stroke-width: .2; }
+
+  .tonearm-bar {
+    fill: none;
+    stroke: #8e8e8e;
+    stroke-width: 2.1;
+    stroke-linecap: round;
+  }
+
+  .tonearm-bar-highlight {
+    fill: none;
+    stroke: rgba(255,255,255,.55);
+    stroke-width: .6;
+    stroke-linecap: round;
+  }
+
+  .headshell { fill: #1b1b1b; stroke: #3a3a3a; stroke-width: .25; }
+  .headshell-lip { fill: #2a2a2a; }
+  .headshell-screw { fill: #cfcfcf; }
+
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .record {
+      animation-play-state: paused;
+    }
+  }
+</style>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar" aria-label="Main menu">
+      <button class="sidebar-close" id="sidebarClose" type="button" aria-label="Close menu">×</button>
+
+      <nav class="sidebar-nav">
+        <button class="sidebar-link" type="button">
+          <svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1v-9.2Z"
+                  fill="none" stroke="currentColor" stroke-width="1.7"
+                  stroke-linejoin="round"/>
+          </svg>
+          <span>Home</span>
+        </button>
+      </nav>
+    </aside>
+
+
+    <button class="menu-button" type="button" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="site-title">MuteF</div>
+  </header>
+
+  <main class="home-page">
+    <div class="turntable-stage">
+      <div class="record" aria-label="회전하는 LP">
+        <div class="center-disc"></div>
+        <div class="center-hole" aria-hidden="true"></div>
+      </div>
+
+      <svg class="tonearm" viewBox="0 0 100 100" aria-label="LP 톤암">
+        <defs>
+          <radialGradient id="capMetal" cx="40%" cy="35%" r="70%">
+            <stop offset="0%" stop-color="#f2f2f2"/>
+            <stop offset="55%" stop-color="#b5b5b5"/>
+            <stop offset="100%" stop-color="#7a7a7a"/>
+          </radialGradient>
+        </defs>
+
+        <!-- 톤암 전체 위치: 모양은 그대로 두고 이 translate 값으로만 이동 -->
+        <g class="tonearm-group" transform="translate(1 -3)">
+          <!-- 회전축 베이스 + 은색 캡: 베이스 윗부분이 LP 윗선(y=12.5)보다 내려오도록 배치 -->
+          <circle class="tonearm-base" cx="86.6" cy="21.5" r="5.8"/>
+          <circle class="tonearm-cap" cx="86.6" cy="21.5" r="3.2"/>
+
+          <!-- 암: 은색 캡 위 레이어. 시작~바깥으로 휘는 부분은 사진과 동일,
+               아래쪽에서 LP 안쪽으로 꺾여 들어옴 -->
+          <path class="tonearm-bar" d="M86.6 21.5 L86.4 49 Q86.3 57, 79.2 62.1"/>
+          <path class="tonearm-bar-highlight" transform="translate(-.35 0)" d="M86.6 21.7 L86.4 49 Q86.3 57, 79.2 62.1"/>
+
+          <!-- 헤드쉘: 암 끝에 이어짐. 바늘 끝은 LP 오른쪽 아래, 반지름의 약 87% 지점 -->
+          <g transform="translate(79.2 62.1) rotate(54.3)">
+            <rect class="headshell" x="-2" y="-.6" width="4" height="7.8" rx=".4"/>
+            <path class="headshell-lip" d="M-2 5.4 L-3.6 6.6 L-3.4 7.4 L-2 6.8 Z"/>
+            <circle class="headshell-screw" cx="0" cy="5" r=".6"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </main>
+
+  <script>
+    const sidebar = document.getElementById("sidebar");
+    const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+    function openSidebar() {
+      sidebar.classList.add("open");
+      sidebarOverlay.classList.add("open");
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove("open");
+      sidebarOverlay.classList.remove("open");
+    }
+
+    document.querySelector(".menu-button").addEventListener("click", openSidebar);
+    document.getElementById("sidebarClose").addEventListener("click", closeSidebar);
+    sidebarOverlay.addEventListener("click", closeSidebar);
+  </script>
+</body>
+</html>
