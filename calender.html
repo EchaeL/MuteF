@@ -639,7 +639,7 @@
 
         <div class="create-actions">
           <button type="button" id="cancelCreate">취소</button>
-          <button type="submit" class="primary">저장</button>
+          <button type="submit" class="primary" id="saveCreate">저장</button>
         </div>
       </form>
 
@@ -788,7 +788,7 @@
 
       if (cell.dataset.key === selectedKey) {
         openedFromCalendar = true;
-        location.hash = `create/${selectedKey}`;
+        navigate(`create/${selectedKey}`);
         return;
       }
 
@@ -856,8 +856,24 @@
     const createForm = document.getElementById("createForm");
     const createNote = document.getElementById("createNote");
 
+    // 지금 보여줄 화면. 주소의 #도 같이 바꾸지만, 미리보기처럼 주소를 못 바꾸는
+    // 환경에서도 화면 전환이 되도록 이 값을 기준으로 화면을 그림
+    let currentRoute = location.hash.slice(1);
+
+    function setHash(route) {
+      try {
+        if (location.hash.slice(1) !== route) location.hash = route;
+      } catch (e) { /* 주소를 못 바꾸는 환경 — 무시 */ }
+    }
+
+    function navigate(route) {
+      currentRoute = route;
+      setHash(route);
+      showScreen();
+    }
+
     function showScreen() {
-      const match = location.hash.match(/^#create\/(\d{4})-(\d{2})-(\d{2})$/);
+      const match = currentRoute.match(/^create\/(\d{4})-(\d{2})-(\d{2})$/);
 
       if (match) {
         const [, y, m, d] = match;
@@ -877,16 +893,21 @@
     function backToCalendar() {
       if (openedFromCalendar) {
         openedFromCalendar = false;
-        history.back();
+        currentRoute = "";
+        showScreen();
+        try { history.back(); } catch (e) { /* 무시 */ }
       } else {
-        location.hash = "";
+        navigate("");
       }
     }
 
     // 생성 화면에서 날짜를 바꾸면 주소(#create/날짜)도 같이 바꿔 둠 — 새로고침해도 유지
     eventDate.addEventListener("change", function() {
       if (/^\d{4}-\d{2}-\d{2}$/.test(eventDate.value)) {
-        history.replaceState(null, "", `#create/${eventDate.value}`);
+        currentRoute = `create/${eventDate.value}`;
+        try {
+          history.replaceState(null, "", `#${currentRoute}`);
+        } catch (e) { /* 주소를 못 바꾸는 환경 — 무시 */ }
       }
     });
 
@@ -927,9 +948,9 @@
     document.getElementById("cancelCreate").addEventListener("click", backToCalendar);
 
     // 저장: 이 브라우저에 저장하고 달력으로 돌아감
-    createForm.addEventListener("submit", function(event) {
-      event.preventDefault();
-
+    // 미리보기 화면 등 폼 제출이 막힌 환경에서도 작동하도록
+    // 폼 submit 대신 저장 버튼 클릭으로 직접 처리 (index.html과 같은 방식)
+    function saveEvent() {
       const title = eventTitle.value.trim();
       const date = eventDate.value;
 
@@ -958,11 +979,9 @@
         memo: eventMemo.value.trim()
       };
 
-      if (!saveEvents([...events, newEvent])) {
-        createNote.textContent = "저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.";
-        return;
-      }
+      // 브라우저 저장이 막힌 환경이어도 지금 화면에는 보이도록 목록에는 항상 추가
       events.push(newEvent);
+      saveEvents(events);
 
       // 저장한 날짜가 있는 달을 보여줌
       const [y, m] = date.split("-").map(Number);
@@ -971,9 +990,21 @@
       selectedKey = null;
       renderCalendar();
       backToCalendar();
+    }
+
+    document.getElementById("saveCreate").addEventListener("click", function(event) {
+      event.preventDefault();
+      saveEvent();
     });
 
-    window.addEventListener("hashchange", showScreen);
+    createForm.addEventListener("submit", function(event) {
+      event.preventDefault();
+    });
+
+    window.addEventListener("hashchange", function() {
+      currentRoute = location.hash.slice(1);
+      showScreen();
+    });
 
     renderCalendar();
     showScreen();
