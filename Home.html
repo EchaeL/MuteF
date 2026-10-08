@@ -109,6 +109,11 @@
     background: #222;
   }
 
+  .sidebar-link.active {
+    background: #222;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+  }
+
   .home-icon {
     width: 22px;
     height: 22px;
@@ -398,13 +403,23 @@
       <button class="sidebar-close" id="sidebarClose" type="button" aria-label="Close menu">×</button>
 
       <nav class="sidebar-nav">
-        <button class="sidebar-link" type="button">
+        <button class="sidebar-link" type="button" data-href="Home.html">
           <svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1v-9.2Z"
                   fill="none" stroke="currentColor" stroke-width="1.7"
                   stroke-linejoin="round"/>
           </svg>
           <span>Home</span>
+        </button>
+        <button class="sidebar-link" type="button" data-href="calender.html">
+          <svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3.5" y="5" width="17" height="15.5" rx="1.5"
+                  fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M3.5 9.8h17M8 3v4M16 3v4"
+                  fill="none" stroke="currentColor" stroke-width="1.7"
+                  stroke-linecap="round"/>
+          </svg>
+          <span>일정</span>
         </button>
       </nav>
     </aside>
@@ -474,6 +489,24 @@
     document.querySelector(".menu-button").addEventListener("click", openSidebar);
     document.getElementById("sidebarClose").addEventListener("click", closeSidebar);
     sidebarOverlay.addEventListener("click", closeSidebar);
+
+    // 사이드바 메뉴: 누르면 박스 표시 후 해당 파일로 이동
+    // 파일 이름이나 위치가 바뀌면 각 버튼의 data-href만 수정하면 됩니다.
+    const sidebarLinks = document.querySelectorAll(".sidebar-link");
+
+    sidebarLinks.forEach(function(link) {
+      link.addEventListener("click", function() {
+        link.classList.add("active");
+        window.location.href = link.dataset.href;
+      });
+    });
+
+    // 메뉴 버튼이 아닌 다른 곳을 누르면 박스가 사라짐
+    document.addEventListener("pointerdown", function(event) {
+      if (!event.target.closest(".sidebar-link")) {
+        sidebarLinks.forEach(link => link.classList.remove("active"));
+      }
+    });
   </script>
 </body>
 </html>
