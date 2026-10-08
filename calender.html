@@ -250,7 +250,7 @@
   .weekdays,
   .days {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 4px;
   }
 
@@ -268,6 +268,8 @@
 
   .day {
     position: relative;
+    min-width: 0;
+    overflow: hidden;
     aspect-ratio: 1;
     display: flex;
     align-items: center;
@@ -309,8 +311,44 @@
     color: #000;
   }
 
-  .day.selected .num {
+  .day.selected .num,
+  .day.selected .titles {
     display: none;
+  }
+
+  /* 일정이 있는 날: 숫자 대신 일정 이름 */
+  .day .titles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    padding: 0 3px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    font-size: 11px;
+    line-height: 1.25;
+    text-align: center;
+  }
+
+  /* 일정 하나: 최대 2줄 / 여러 개: 한 줄씩 — 넘치면 … */
+  .day .titles span {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    word-break: break-all;
+  }
+
+  .day .titles.multi span {
+    -webkit-line-clamp: 1;
+  }
+
+  .day .titles .more {
+    color: #888;
+    font-size: 10px;
+  }
+
+  .day.today .titles .more {
+    color: #bbb;
   }
 
   .day.selected .plus {
@@ -349,6 +387,7 @@
   }
 
   .create-form input[type="text"],
+  .create-form input[type="url"],
   .create-form input[type="date"],
   .create-form textarea {
     display: block;
@@ -376,33 +415,11 @@
     border-color: #000;
   }
 
-  /* 장소: 입력칸 + 네이버 지도 버튼 */
+  /* 장소: 이름 + 링크 */
   .place-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 2fr 3fr;
     gap: 8px;
-  }
-
-  .place-row input {
-    flex: 1;
-  }
-
-  .map-button {
-    flex: 0 0 auto;
-    height: 46px;
-    padding: 0 12px;
-    border: 1px solid #000;
-    border-radius: 6px;
-    background: #fff;
-    color: #000;
-    font-family: var(--myeongjo);
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .map-button:active {
-    background: #f0f0f0;
   }
 
   /* 참여 인원: 스크롤 목록 + 체크박스 */
@@ -586,7 +603,7 @@
     <fieldset class="frame hidden" id="createScreen">
       <legend class="frame-title">일정 생성</legend>
 
-      <form class="create-form" id="createForm" autocomplete="off">
+      <form class="create-form" id="createForm" autocomplete="off" novalidate>
         <!-- 제목 + 날짜 -->
         <div class="field-row">
           <label class="field">
@@ -595,16 +612,16 @@
           </label>
           <label class="field">
             <span class="field-label">날짜</span>
-            <input id="eventDate" type="date" required>
+            <input id="eventDate" type="date">
           </label>
         </div>
 
         <!-- 장소 -->
         <div class="field">
-          <label class="field-label" for="eventPlace">장소</label>
+          <label class="field-label" for="placeName">장소</label>
           <div class="place-row">
-            <input id="eventPlace" type="text" placeholder="장소 입력">
-            <button type="button" class="map-button" id="openMap">네이버 지도</button>
+            <input id="placeName" type="text" placeholder="장소 이름">
+            <input id="placeLink" type="url" placeholder="링크 (https://...)" aria-label="장소 링크" inputmode="url">
           </div>
         </div>
 
@@ -677,6 +694,32 @@
       return `${y}-${pad(m + 1)}-${pad(d)}`;
     }
 
+    /* ───── 일정 저장 (이 브라우저의 localStorage) ───── */
+    const STORAGE_KEY = "mutef-events";
+
+    function loadEvents() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveEvents(list) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    let events = loadEvents();
+
+    function eventsOn(key) {
+      return events.filter(ev => ev.date === key);
+    }
+
     function renderCalendar() {
       calLabel.textContent = `${viewYear}년 ${viewMonth + 1}월`;
       daysEl.innerHTML = "";
@@ -697,7 +740,30 @@
         cell.className = "day";
         cell.dataset.key = key;
         cell.setAttribute("aria-label", `${viewMonth + 1}월 ${d}일`);
-        cell.innerHTML = `<span class="num">${d}</span><span class="plus" aria-hidden="true">+</span>`;
+        const dayEvents = eventsOn(key);
+
+        if (dayEvents.length) {
+          // 일정이 있으면 날짜 숫자 대신 일정 이름 (최대 2개, 나머지는 +N)
+          const titles = document.createElement("span");
+          titles.className = dayEvents.length > 1 ? "titles multi" : "titles";
+          dayEvents.slice(0, 2).forEach(ev => {
+            const t = document.createElement("span");
+            t.textContent = ev.title;
+            titles.appendChild(t);
+          });
+          if (dayEvents.length > 2) {
+            const more = document.createElement("span");
+            more.className = "more";
+            more.textContent = `+${dayEvents.length - 2}`;
+            titles.appendChild(more);
+          }
+          cell.appendChild(titles);
+          cell.setAttribute("aria-label",
+            `${viewMonth + 1}월 ${d}일, 일정: ${dayEvents.map(ev => ev.title).join(", ")}`);
+        } else {
+          cell.insertAdjacentHTML("beforeend", `<span class="num">${d}</span>`);
+        }
+        cell.insertAdjacentHTML("beforeend", `<span class="plus" aria-hidden="true">+</span>`);
 
         if (
           viewYear === today.getFullYear() &&
@@ -781,7 +847,10 @@
     const calendarScreen = document.getElementById("calendarScreen");
     const createScreen = document.getElementById("createScreen");
     const eventDate = document.getElementById("eventDate");
-    const eventPlace = document.getElementById("eventPlace");
+    const eventTitle = document.getElementById("eventTitle");
+    const placeName = document.getElementById("placeName");
+    const placeLink = document.getElementById("placeLink");
+    const eventMemo = document.getElementById("eventMemo");
     const memberList = document.getElementById("memberList");
     const memberCount = document.getElementById("memberCount");
     const createForm = document.getElementById("createForm");
@@ -821,15 +890,6 @@
       }
     });
 
-    // 장소: 입력한 장소를 네이버 지도에서 검색 (새 탭)
-    document.getElementById("openMap").addEventListener("click", function() {
-      const query = eventPlace.value.trim();
-      const url = query
-        ? `https://map.naver.com/p/search/${encodeURIComponent(query)}`
-        : "https://map.naver.com/";
-      window.open(url, "_blank", "noopener");
-    });
-
     // 참여 인원 — index.html의 아이디 목록에서 관리자(echae)·테스트용(friend1, friend2)을 뺀 것
     const MEMBERS = [
       "권은서",
@@ -866,10 +926,51 @@
 
     document.getElementById("cancelCreate").addEventListener("click", backToCalendar);
 
-    // 더미 저장 — 나중에 실제 저장 기능을 여기에 붙이면 됩니다.
+    // 저장: 이 브라우저에 저장하고 달력으로 돌아감
     createForm.addEventListener("submit", function(event) {
       event.preventDefault();
-      createNote.textContent = "아직 저장 기능은 준비 중이에요.";
+
+      const title = eventTitle.value.trim();
+      const date = eventDate.value;
+
+      if (!title) {
+        createNote.textContent = "제목을 입력해 주세요.";
+        eventTitle.focus();
+        return;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        createNote.textContent = "날짜를 선택해 주세요.";
+        eventDate.focus();
+        return;
+      }
+
+      let link = placeLink.value.trim();
+      if (link && !/^https?:\/\//i.test(link)) {
+        link = "https://" + link;
+      }
+
+      const newEvent = {
+        id: Date.now().toString(36),
+        title,
+        date,
+        place: { name: placeName.value.trim(), link },
+        members: [...memberList.querySelectorAll("input:checked")].map(el => el.value),
+        memo: eventMemo.value.trim()
+      };
+
+      if (!saveEvents([...events, newEvent])) {
+        createNote.textContent = "저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.";
+        return;
+      }
+      events.push(newEvent);
+
+      // 저장한 날짜가 있는 달을 보여줌
+      const [y, m] = date.split("-").map(Number);
+      viewYear = y;
+      viewMonth = m - 1;
+      selectedKey = null;
+      renderCalendar();
+      backToCalendar();
     });
 
     window.addEventListener("hashchange", showScreen);
