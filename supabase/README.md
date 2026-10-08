@@ -11,4 +11,4 @@ MuteF 사이트가 쓰는 Supabase 프로젝트(MuteFweb)의 데이터베이스 
 | --- | --- | --- |
 | `events` | `calender.html` | 일정 (제목, 날짜, 장소 이름/링크, 참여 인원, 메모) |
 
-공개(publishable) 키로는 `events`를 읽기·추가만 할 수 있음. 수정·삭제는 막혀 있음.
+공개(publishable) 키로 `events`를 읽기·추가·수정·삭제할 수 있음 (아직 진짜 로그인이 없어서). 로그인을 붙이면 규칙을 좁힐 것.

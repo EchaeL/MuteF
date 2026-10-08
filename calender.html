@@ -540,6 +540,205 @@
     color: #777;
   }
 
+  /* ───── 날짜별 일정 목록 팝업 / 삭제 확인 팝업 ───── */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .modal {
+    width: min(420px, 100%);
+    max-height: min(80vh, 640px);
+    display: flex;
+    flex-direction: column;
+    padding: 18px 16px 16px;
+    border: 3px solid #000;
+    border-radius: 18px;
+    background: #fff;
+    color: #000;
+  }
+
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .modal-head h2 {
+    margin: 0;
+    font-family: var(--myeongjo);
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .modal-close {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    background: transparent;
+    color: #000;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .event-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    padding: 2px;
+    margin: 0 -2px;
+  }
+
+  .event-card {
+    position: relative;
+    padding: 12px 44px 12px 14px;
+    border: 1px solid #d6d6d6;
+    border-radius: 10px;
+    background: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  }
+
+  .event-card h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    word-break: break-all;
+  }
+
+  .event-info {
+    margin: 8px 0 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 10px;
+    font-size: 14px;
+    color: #333;
+  }
+
+  .event-info dt {
+    color: #888;
+  }
+
+  .event-info dd {
+    margin: 0;
+    min-width: 0;
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+
+  .event-info a {
+    color: #000;
+  }
+
+  /* 세로 점 3개 메뉴 버튼 — 일정 박스 오른쪽 위 */
+  .kebab {
+    position: absolute;
+    top: 6px;
+    right: 4px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #000;
+    cursor: pointer;
+  }
+
+  .kebab:hover,
+  .kebab[aria-expanded="true"] {
+    background: #f0f0f0;
+  }
+
+  .kebab svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .event-menu {
+    position: absolute;
+    top: 42px;
+    right: 8px;
+    z-index: 1;
+    min-width: 96px;
+    padding: 4px;
+    border: 1px solid #000;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(0,0,0,.15);
+  }
+
+  .event-menu button {
+    display: block;
+    width: 100%;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: #000;
+    font-family: var(--myeongjo);
+    font-size: 15px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .event-menu button:hover {
+    background: #f0f0f0;
+  }
+
+  .event-menu .danger {
+    color: #c62828;
+  }
+
+  .modal-add {
+    flex: 0 0 auto;
+    height: 44px;
+    margin-top: 12px;
+    border: 1px dashed #000;
+    border-radius: 8px;
+    background: #fff;
+    color: #000;
+    font-family: var(--myeongjo);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .modal-add:hover {
+    background: #f5f5f5;
+  }
+
+  .modal.confirm {
+    width: min(340px, 100%);
+    padding: 22px 16px 16px;
+  }
+
+  .modal.confirm p {
+    margin: 0 0 6px;
+    text-align: center;
+    font-family: var(--myeongjo);
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.5;
+    word-break: keep-all;
+  }
+
+  .modal.confirm .create-note {
+    margin-top: 0;
+  }
+
   @media (max-width: 480px) {
     main {
       padding-top: 76px;
@@ -618,7 +817,7 @@
 
     <!-- 화면 2: 일정 생성 (같은 html 안의 다른 화면 — 지금은 더미) -->
     <fieldset class="frame hidden" id="createScreen">
-      <legend class="frame-title">일정 생성</legend>
+      <legend class="frame-title" id="formTitle">일정 생성</legend>
 
       <form class="create-form" id="createForm" autocomplete="off" novalidate>
         <!-- 제목 + 날짜 -->
@@ -663,6 +862,30 @@
       <div class="create-note" id="createNote" aria-live="polite"></div>
     </fieldset>
   </main>
+
+  <!-- 날짜별 일정 목록 팝업 -->
+  <div class="modal-backdrop hidden" id="dayModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dayModalTitle">
+      <div class="modal-head">
+        <h2 id="dayModalTitle"></h2>
+        <button class="modal-close" id="dayModalClose" type="button" aria-label="닫기">×</button>
+      </div>
+      <div class="event-list" id="eventList"></div>
+      <button class="modal-add" id="dayModalAdd" type="button">+ 일정 추가</button>
+    </div>
+  </div>
+
+  <!-- 삭제 확인 팝업 -->
+  <div class="modal-backdrop hidden" id="confirmModal">
+    <div class="modal confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmText">
+      <p id="confirmText"></p>
+      <div class="create-note" id="confirmNote" aria-live="polite"></div>
+      <div class="create-actions">
+        <button type="button" id="confirmNo">아니요</button>
+        <button type="button" class="primary" id="confirmYes">네</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     /* ───── 사이드바 ───── */
@@ -722,12 +945,13 @@
 
     /* ───── 일정 저장소 (Supabase) ───── */
     // 공개용(publishable) 키라 html에 들어가도 되는 값. 표 접근 규칙은
-    // supabase/migrations/ 의 SQL에서 관리 (읽기·추가만 허용)
+    // supabase/migrations/ 의 SQL에서 관리
     const SUPABASE_URL = "https://xbvormcnoexpxtjoioko.supabase.co";
     const SUPABASE_KEY = "sb_publishable_WUlX-m46GveYJsrJ837LsQ_732EGb8R";
     const EVENTS_API = `${SUPABASE_URL}/rest/v1/events`;
 
     let events = [];
+    let eventsLoaded = false;
 
     // Supabase 행 → 화면에서 쓰는 형태
     function fromRow(row) {
@@ -749,25 +973,53 @@
       return (await res.json()).map(fromRow);
     }
 
+    // 화면에서 쓰는 형태 → Supabase 행
+    function toRow(ev) {
+      return {
+        title: ev.title,
+        date: ev.date,
+        place_name: ev.place.name,
+        place_link: ev.place.link,
+        members: ev.members,
+        memo: ev.memo
+      };
+    }
+
+    const WRITE_HEADERS = {
+      apikey: SUPABASE_KEY,
+      "Content-Type": "application/json",
+      Prefer: "return=representation"
+    };
+
     async function insertEvent(ev) {
       const res = await fetch(EVENTS_API, {
         method: "POST",
-        headers: {
-          apikey: SUPABASE_KEY,
-          "Content-Type": "application/json",
-          Prefer: "return=representation"
-        },
-        body: JSON.stringify({
-          title: ev.title,
-          date: ev.date,
-          place_name: ev.place.name,
-          place_link: ev.place.link,
-          members: ev.members,
-          memo: ev.memo
-        })
+        headers: WRITE_HEADERS,
+        body: JSON.stringify(toRow(ev))
       });
       if (!res.ok) throw new Error(`저장 실패 (${res.status})`);
       return fromRow((await res.json())[0]);
+    }
+
+    // 수정·삭제는 바뀐 행을 돌려받아서, 0개면(권한 없음·이미 삭제됨) 실패로 처리
+    async function updateEvent(id, ev) {
+      const res = await fetch(`${EVENTS_API}?id=eq.${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: WRITE_HEADERS,
+        body: JSON.stringify(toRow(ev))
+      });
+      const rows = res.ok ? await res.json() : [];
+      if (!rows.length) throw new Error(`수정 실패 (${res.status})`);
+      return fromRow(rows[0]);
+    }
+
+    async function deleteEvent(id) {
+      const res = await fetch(`${EVENTS_API}?id=eq.${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: WRITE_HEADERS
+      });
+      const rows = res.ok ? await res.json() : [];
+      if (!rows.length) throw new Error(`삭제 실패 (${res.status})`);
     }
 
     function eventsOn(key) {
@@ -835,10 +1087,19 @@
       }
     }
 
-    // 날짜 칸 클릭: 첫 번째 → 회색 박스 + 기호, 두 번째(+ 누름) → 일정 생성 화면
+    // 날짜 칸 클릭
+    //  - 일정이 있는 날: 그 날짜의 일정 목록 팝업
+    //  - 일정이 없는 날: 첫 번째 → 회색 박스 + 기호, 두 번째(+ 누름) → 일정 생성 화면
     daysEl.addEventListener("click", function(event) {
       const cell = event.target.closest(".day:not(.empty)");
       if (!cell) return;
+
+      if (eventsOn(cell.dataset.key).length) {
+        selectedKey = null;
+        daysEl.querySelectorAll(".day.selected").forEach(el => el.classList.remove("selected"));
+        openDayModal(cell.dataset.key);
+        return;
+      }
 
       if (cell.dataset.key === selectedKey) {
         openedFromCalendar = true;
@@ -909,6 +1170,9 @@
     const memberCount = document.getElementById("memberCount");
     const createForm = document.getElementById("createForm");
     const createNote = document.getElementById("createNote");
+    const formTitle = document.getElementById("formTitle");
+
+    let editingId = null;   // 수정 중인 일정 id (새 일정이면 null)
 
     // 지금 보여줄 화면. 주소의 #도 같이 바꾸지만, 미리보기처럼 주소를 못 바꾸는
     // 환경에서도 화면 전환이 되도록 이 값을 기준으로 화면을 그림
@@ -926,18 +1190,44 @@
       showScreen();
     }
 
-    function showScreen() {
-      const match = currentRoute.match(/^create\/(\d{4})-(\d{2})-(\d{2})$/);
+    // 생성/수정 화면 채우기 — ev가 있으면 수정, 없으면 date로 새 일정
+    function openForm(ev, date) {
+      createForm.reset();
+      editingId = ev ? ev.id : null;
+      formTitle.textContent = ev ? "일정 수정" : "일정 생성";
 
-      if (match) {
-        const [, y, m, d] = match;
-        createForm.reset();
-        eventDate.value = `${y}-${m}-${d}`;   // 달력에서 선택한 날짜가 기본값
-        updateMembers();
-        createNote.textContent = "";
-        calendarScreen.classList.add("hidden");
-        createScreen.classList.remove("hidden");
+      if (ev) {
+        eventTitle.value = ev.title;
+        eventDate.value = ev.date;
+        placeName.value = ev.place.name;
+        placeLink.value = ev.place.link;
+        eventMemo.value = ev.memo;
+        memberList.querySelectorAll("input").forEach(input => {
+          input.checked = ev.members.includes(input.value);
+        });
       } else {
+        eventDate.value = date;   // 달력에서 선택한 날짜가 기본값
+      }
+
+      updateMembers();
+      createNote.textContent = "";
+      calendarScreen.classList.add("hidden");
+      createScreen.classList.remove("hidden");
+    }
+
+    function showScreen() {
+      const createMatch = currentRoute.match(/^create\/(\d{4}-\d{2}-\d{2})$/);
+      const editMatch = currentRoute.match(/^edit\/([\w-]+)$/);
+      const editing = editMatch && events.find(ev => ev.id === editMatch[1]);
+
+      if (createMatch) {
+        openForm(null, createMatch[1]);
+      } else if (editing) {
+        openForm(editing);
+      } else {
+        // 수정할 일정이 없으면(삭제됨 등) 달력으로. 아직 불러오는 중이면 불러온 뒤 다시 확인
+        if (editMatch && eventsLoaded) navigate("");
+        editingId = null;
         createScreen.classList.add("hidden");
         calendarScreen.classList.remove("hidden");
       }
@@ -957,7 +1247,7 @@
 
     // 생성 화면에서 날짜를 바꾸면 주소(#create/날짜)도 같이 바꿔 둠 — 새로고침해도 유지
     eventDate.addEventListener("change", function() {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(eventDate.value)) {
+      if (!editingId && /^\d{4}-\d{2}-\d{2}$/.test(eventDate.value)) {
         currentRoute = `create/${eventDate.value}`;
         try {
           history.replaceState(null, "", `#${currentRoute}`);
@@ -1001,7 +1291,7 @@
 
     document.getElementById("cancelCreate").addEventListener("click", backToCalendar);
 
-    // 저장: Supabase에 저장하고 달력으로 돌아감
+    // 저장: Supabase에 저장(새 일정은 추가, 수정은 덮어쓰기)하고 달력으로 돌아감
     // 미리보기 화면 등 폼 제출이 막힌 환경에서도 작동하도록
     // 폼 submit 대신 저장 버튼 클릭으로 직접 처리 (index.html과 같은 방식)
     const saveButton = document.getElementById("saveCreate");
@@ -1043,7 +1333,12 @@
       createNote.textContent = "";
 
       try {
-        events.push(await insertEvent(newEvent));
+        if (editingId) {
+          const updated = await updateEvent(editingId, newEvent);
+          events = events.map(ev => ev.id === updated.id ? updated : ev);
+        } else {
+          events.push(await insertEvent(newEvent));
+        }
       } catch (e) {
         console.error(e);
         createNote.textContent = "저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.";
@@ -1077,6 +1372,195 @@
       showScreen();
     });
 
+    /* ───── 날짜별 일정 목록 팝업 ───── */
+    const dayModal = document.getElementById("dayModal");
+    const dayModalTitle = document.getElementById("dayModalTitle");
+    const eventList = document.getElementById("eventList");
+    const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+    let modalKey = null;   // 팝업에 보여주는 날짜
+
+    const KEBAB_ICON = `<svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="5" r="1.9" fill="currentColor"/>
+      <circle cx="12" cy="12" r="1.9" fill="currentColor"/>
+      <circle cx="12" cy="19" r="1.9" fill="currentColor"/>
+    </svg>`;
+
+    function addInfo(dl, label, content) {
+      const dt = document.createElement("dt");
+      dt.textContent = label;
+      const dd = document.createElement("dd");
+      if (typeof content === "string") dd.textContent = content;
+      else dd.appendChild(content);
+      dl.append(dt, dd);
+    }
+
+    function renderDayModal() {
+      const [y, m, d] = modalKey.split("-").map(Number);
+      const weekday = WEEKDAYS[new Date(y, m - 1, d).getDay()];
+      dayModalTitle.textContent = `${m}월 ${d}일 (${weekday})`;
+      eventList.innerHTML = "";
+
+      eventsOn(modalKey).forEach(function(ev) {
+        const card = document.createElement("article");
+        card.className = "event-card";
+
+        const title = document.createElement("h3");
+        title.textContent = ev.title;
+        card.appendChild(title);
+
+        const kebab = document.createElement("button");
+        kebab.type = "button";
+        kebab.className = "kebab";
+        kebab.setAttribute("aria-label", `${ev.title} 메뉴`);
+        kebab.setAttribute("aria-expanded", "false");
+        kebab.innerHTML = KEBAB_ICON;
+        card.appendChild(kebab);
+
+        const menu = document.createElement("div");
+        menu.className = "event-menu hidden";
+        menu.innerHTML = `
+          <button type="button" class="danger" data-action="delete">삭제</button>
+          <button type="button" data-action="edit">수정</button>`;
+        card.appendChild(menu);
+
+        kebab.addEventListener("click", function(event) {
+          event.stopPropagation();
+          const willOpen = menu.classList.contains("hidden");
+          closeEventMenus();
+          menu.classList.toggle("hidden", !willOpen);
+          kebab.setAttribute("aria-expanded", String(willOpen));
+        });
+
+        menu.addEventListener("click", function(event) {
+          const action = event.target.closest("button")?.dataset.action;
+          if (action === "delete") askDelete(ev);
+          if (action === "edit") {
+            closeDayModal();
+            openedFromCalendar = true;
+            navigate(`edit/${ev.id}`);
+          }
+        });
+
+        const info = document.createElement("dl");
+        info.className = "event-info";
+
+        if (ev.place.name || ev.place.link) {
+          if (/^https?:\/\//i.test(ev.place.link)) {
+            const a = document.createElement("a");
+            a.href = ev.place.link;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.textContent = ev.place.name || ev.place.link;
+            addInfo(info, "장소", a);
+          } else {
+            addInfo(info, "장소", ev.place.name || ev.place.link);
+          }
+        }
+        if (ev.members.length) addInfo(info, "참여", ev.members.join(", "));
+        if (ev.memo) addInfo(info, "메모", ev.memo);
+
+        if (info.children.length) card.appendChild(info);
+        eventList.appendChild(card);
+      });
+    }
+
+    function closeEventMenus() {
+      eventList.querySelectorAll(".event-menu").forEach(menu => menu.classList.add("hidden"));
+      eventList.querySelectorAll(".kebab").forEach(k => k.setAttribute("aria-expanded", "false"));
+    }
+
+    function openDayModal(key) {
+      modalKey = key;
+      renderDayModal();
+      dayModal.classList.remove("hidden");
+    }
+
+    function closeDayModal() {
+      modalKey = null;
+      dayModal.classList.add("hidden");
+    }
+
+    document.getElementById("dayModalClose").addEventListener("click", closeDayModal);
+
+    // 팝업 바깥(어두운 부분)을 누르면 닫힘, 팝업 안 다른 곳을 누르면 ⋮ 메뉴만 닫힘
+    dayModal.addEventListener("click", function(event) {
+      if (event.target === dayModal) closeDayModal();
+      else if (!event.target.closest(".event-menu")) closeEventMenus();
+    });
+
+    // 같은 날짜에 일정 하나 더 추가
+    document.getElementById("dayModalAdd").addEventListener("click", function() {
+      const key = modalKey;
+      closeDayModal();
+      openedFromCalendar = true;
+      navigate(`create/${key}`);
+    });
+
+    /* ───── 삭제 확인 팝업 ───── */
+    const confirmModal = document.getElementById("confirmModal");
+    const confirmText = document.getElementById("confirmText");
+    const confirmNote = document.getElementById("confirmNote");
+    const confirmYes = document.getElementById("confirmYes");
+    let deleteTarget = null;
+    let deleting = false;
+
+    function askDelete(ev) {
+      closeEventMenus();
+      deleteTarget = ev;
+      confirmText.textContent = `정말 '${ev.title}' 일정을 삭제할까요?`;
+      confirmNote.textContent = "";
+      confirmModal.classList.remove("hidden");
+    }
+
+    function closeConfirm() {
+      if (deleting) return;
+      deleteTarget = null;
+      confirmModal.classList.add("hidden");
+    }
+
+    document.getElementById("confirmNo").addEventListener("click", closeConfirm);
+
+    confirmModal.addEventListener("click", function(event) {
+      if (event.target === confirmModal) closeConfirm();
+    });
+
+    confirmYes.addEventListener("click", async function() {
+      if (!deleteTarget || deleting) return;
+
+      deleting = true;
+      confirmYes.disabled = true;
+      confirmYes.textContent = "삭제 중…";
+      confirmNote.textContent = "";
+
+      try {
+        await deleteEvent(deleteTarget.id);
+      } catch (e) {
+        console.error(e);
+        confirmNote.textContent = "삭제하지 못했어요. 다시 눌러 주세요.";
+        return;
+      } finally {
+        deleting = false;
+        confirmYes.disabled = false;
+        confirmYes.textContent = "네";
+      }
+
+      const removedId = deleteTarget.id;
+      events = events.filter(ev => ev.id !== removedId);
+      closeConfirm();
+      renderCalendar();
+
+      // 그 날짜에 남은 일정이 없으면 목록 팝업도 닫음
+      if (modalKey && eventsOn(modalKey).length) renderDayModal();
+      else closeDayModal();
+    });
+
+    // Esc: 위에 떠 있는 팝업부터 닫기
+    document.addEventListener("keydown", function(event) {
+      if (event.key !== "Escape") return;
+      if (!confirmModal.classList.contains("hidden")) closeConfirm();
+      else if (!dayModal.classList.contains("hidden")) closeDayModal();
+    });
+
     renderCalendar();
     showScreen();
 
@@ -1085,7 +1569,10 @@
     fetchEvents()
       .then(function(list) {
         events = list;
+        eventsLoaded = true;
         renderCalendar();
+        // 수정 화면 주소(#edit/...)로 바로 열었으면 불러온 뒤 다시 그림
+        if (currentRoute.startsWith("edit/")) showScreen();
       })
       .catch(function(e) {
         console.error(e);
