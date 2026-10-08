@@ -527,6 +527,11 @@
     color: #fff;
   }
 
+  .create-actions button:disabled {
+    opacity: .55;
+    cursor: default;
+  }
+
   .create-note {
     min-height: 20px;
     margin-top: 12px;
@@ -597,6 +602,8 @@
         </div>
         <div class="days" id="days"></div>
       </div>
+
+      <div class="create-note" id="calNote" aria-live="polite"></div>
     </fieldset>
 
     <!-- 화면 2: 일정 생성 (같은 html 안의 다른 화면 — 지금은 더미) -->
@@ -694,27 +701,55 @@
       return `${y}-${pad(m + 1)}-${pad(d)}`;
     }
 
-    /* ───── 일정 저장 (이 브라우저의 localStorage) ───── */
-    const STORAGE_KEY = "mutef-events";
+    /* ───── 일정 저장소 (Supabase) ───── */
+    // 공개용(publishable) 키라 html에 들어가도 되는 값. 표 접근 규칙은
+    // supabase/migrations/ 의 SQL에서 관리 (읽기·추가만 허용)
+    const SUPABASE_URL = "https://xbvormcnoexpxtjoioko.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_WUlX-m46GveYJsrJ837LsQ_732EGb8R";
+    const EVENTS_API = `${SUPABASE_URL}/rest/v1/events`;
 
-    function loadEvents() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-      } catch (e) {
-        return [];
-      }
+    let events = [];
+
+    // Supabase 행 → 화면에서 쓰는 형태
+    function fromRow(row) {
+      return {
+        id: row.id,
+        title: row.title,
+        date: row.date,
+        place: { name: row.place_name || "", link: row.place_link || "" },
+        members: row.members || [],
+        memo: row.memo || ""
+      };
     }
 
-    function saveEvents(list) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-        return true;
-      } catch (e) {
-        return false;
-      }
+    async function fetchEvents() {
+      const res = await fetch(`${EVENTS_API}?select=*&order=date.asc,created_at.asc`, {
+        headers: { apikey: SUPABASE_KEY }
+      });
+      if (!res.ok) throw new Error(`불러오기 실패 (${res.status})`);
+      return (await res.json()).map(fromRow);
     }
 
-    let events = loadEvents();
+    async function insertEvent(ev) {
+      const res = await fetch(EVENTS_API, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_KEY,
+          "Content-Type": "application/json",
+          Prefer: "return=representation"
+        },
+        body: JSON.stringify({
+          title: ev.title,
+          date: ev.date,
+          place_name: ev.place.name,
+          place_link: ev.place.link,
+          members: ev.members,
+          memo: ev.memo
+        })
+      });
+      if (!res.ok) throw new Error(`저장 실패 (${res.status})`);
+      return fromRow((await res.json())[0]);
+    }
 
     function eventsOn(key) {
       return events.filter(ev => ev.date === key);
@@ -947,10 +982,15 @@
 
     document.getElementById("cancelCreate").addEventListener("click", backToCalendar);
 
-    // 저장: 이 브라우저에 저장하고 달력으로 돌아감
+    // 저장: Supabase에 저장하고 달력으로 돌아감
     // 미리보기 화면 등 폼 제출이 막힌 환경에서도 작동하도록
     // 폼 submit 대신 저장 버튼 클릭으로 직접 처리 (index.html과 같은 방식)
-    function saveEvent() {
+    const saveButton = document.getElementById("saveCreate");
+    let saving = false;
+
+    async function saveEvent() {
+      if (saving) return;
+
       const title = eventTitle.value.trim();
       const date = eventDate.value;
 
@@ -971,7 +1011,6 @@
       }
 
       const newEvent = {
-        id: Date.now().toString(36),
         title,
         date,
         place: { name: placeName.value.trim(), link },
@@ -979,9 +1018,22 @@
         memo: eventMemo.value.trim()
       };
 
-      // 브라우저 저장이 막힌 환경이어도 지금 화면에는 보이도록 목록에는 항상 추가
-      events.push(newEvent);
-      saveEvents(events);
+      saving = true;
+      saveButton.disabled = true;
+      saveButton.textContent = "저장 중…";
+      createNote.textContent = "";
+
+      try {
+        events.push(await insertEvent(newEvent));
+      } catch (e) {
+        console.error(e);
+        createNote.textContent = "저장하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.";
+        return;
+      } finally {
+        saving = false;
+        saveButton.disabled = false;
+        saveButton.textContent = "저장";
+      }
 
       // 저장한 날짜가 있는 달을 보여줌
       const [y, m] = date.split("-").map(Number);
@@ -992,7 +1044,7 @@
       backToCalendar();
     }
 
-    document.getElementById("saveCreate").addEventListener("click", function(event) {
+    saveButton.addEventListener("click", function(event) {
       event.preventDefault();
       saveEvent();
     });
@@ -1008,6 +1060,18 @@
 
     renderCalendar();
     showScreen();
+
+    // 처음 열 때 Supabase에서 일정을 불러와 달력에 표시
+    const calNote = document.getElementById("calNote");
+    fetchEvents()
+      .then(function(list) {
+        events = list;
+        renderCalendar();
+      })
+      .catch(function(e) {
+        console.error(e);
+        calNote.textContent = "일정을 불러오지 못했어요. 새로고침해 주세요.";
+      });
   </script>
 </body>
 </html>
