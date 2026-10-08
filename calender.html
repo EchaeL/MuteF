@@ -351,6 +351,12 @@
     color: #bbb;
   }
 
+  /* 이미 지난 일정: 흐린 회색 글씨 */
+  .day.past .titles,
+  .day.past .titles .more {
+    color: #b5b5b5;
+  }
+
   .day.selected .plus {
     display: block;
     font-size: 26px;
@@ -639,6 +645,14 @@
 
   .event-info a {
     color: #000;
+  }
+
+  /* 이미 지난 일정: 흐린 회색 글씨 */
+  .event-card.past h3,
+  .event-card.past .event-info,
+  .event-card.past .event-info dt,
+  .event-card.past .event-info a {
+    color: #b5b5b5;
   }
 
   /* 세로 점 3개 메뉴 버튼 — 일정 박스 오른쪽 위 */
@@ -1025,6 +1039,13 @@
       if (!rows.length) throw new Error(`삭제 실패 (${res.status})`);
     }
 
+    const todayKey = dateKey(today.getFullYear(), today.getMonth(), today.getDate());
+
+    // 오늘보다 앞선 날짜인지 ("YYYY-MM-DD"는 글자 순서 = 날짜 순서)
+    function isPast(key) {
+      return key < todayKey;
+    }
+
     function eventsOn(key) {
       return events.filter(ev => ev.date === key);
     }
@@ -1067,6 +1088,7 @@
             titles.appendChild(more);
           }
           cell.appendChild(titles);
+          if (isPast(key)) cell.classList.add("past");
           cell.setAttribute("aria-label",
             `${viewMonth + 1}월 ${d}일, 일정: ${dayEvents.map(ev => ev.title).join(", ")}`);
         } else {
@@ -1405,7 +1427,7 @@
 
       eventsOn(modalKey).forEach(function(ev) {
         const card = document.createElement("article");
-        card.className = "event-card";
+        card.className = isPast(ev.date) ? "event-card past" : "event-card";
 
         const title = document.createElement("h3");
         title.textContent = ev.title;
