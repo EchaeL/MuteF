@@ -31,11 +31,14 @@
     overflow: hidden;
   }
 
+  /* 상단 바: 배경을 깔아서, 내려오는 메뉴 창은 항상 이 바 밑에서 나옴 */
   .site-header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
+    height: 68px;
+    background: #0d0d0d;
     z-index: 100;
   }
 
@@ -343,31 +346,74 @@
     pointer-events: none;
   }
 
-  /* ───── LP 위 메뉴 (세로 목록) — LP는 돌아도 글자는 고정 ───── */
-  .lp-menu {
-    position: absolute;
-    z-index: 25;
-    /* LP 왼쪽, 가운데 원과 LP 가장자리 사이 */
-    left: 12.5%;
-    width: 22%;
-    top: 50%;
-    transform: translateY(-50%);
+  /* ───── 상단 메뉴 창: 화살표를 누르면 상단 바 밑에서 쭉 내려옴 ───── */
+  .drop-menu {
+    position: fixed;
+    z-index: 90;            /* 상단 바(100)보다 아래 */
+    top: 68px;
+    left: 0;
+    right: 0;
+    background: #141414;
+    border-bottom: 1px solid #2b2b2b;
+    transform: translateY(-100%);
+    transition: transform 0.35s ease;
+  }
+
+  .drop-menu.open {
+    transform: translateY(0);
+    box-shadow: 0 14px 30px rgba(0,0,0,.55);
+  }
+
+  .drop-list {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.6em;
+    gap: 0.5em;
     margin: 0;
-    padding: 0;
+    padding: 22px 16px 26px;
     list-style: none;
     font-family: "Galmuri11", "Galmuri9", monospace;
-    font-size: clamp(14px, 1.2vmin + 9px, 20px);
+    font-size: 18px;
   }
 
-  .lp-link {
+  /* 열기/닫기 손잡이 — 창 아래 끝에 붙어서 같이 내려옴 */
+  .drop-toggle {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 64px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid #2b2b2b;
+    border-top: 0;
+    border-radius: 0 0 10px 10px;
+    background: #141414;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .drop-toggle svg {
+    width: 14px;
+    height: 8px;
+    fill: #fff;
+    shape-rendering: crispEdges;
+    transition: transform 0.35s ease;
+  }
+
+  /* 열리면 화살표가 위를 향함 */
+  .drop-menu.open .drop-toggle svg {
+    transform: rotate(180deg);
+  }
+
+  .menu-link {
     display: inline-flex;
     align-items: center;
     gap: 0.35em;
-    padding: 0.25em 0.3em;
+    padding: 0.3em 0.4em;
     border: 0;
     background: transparent;
     color: #fff;
@@ -380,18 +426,23 @@
   }
 
   /* > 는 터치하거나 커서를 올렸을 때만 보임 (자리는 미리 잡아 둬서 글자가 흔들리지 않음) */
-  .lp-link .arrow {
+  .menu-link .arrow {
     visibility: hidden;
   }
 
-  .lp-link:hover .arrow,
-  .lp-link:focus-visible .arrow,
-  .lp-link.touching .arrow {
+  .menu-link:hover .arrow,
+  .menu-link:focus-visible .arrow,
+  .menu-link.touching .arrow {
     visibility: visible;
   }
 
-  .lp-link:focus {
+  .menu-link:focus,
+  .drop-toggle:focus {
     outline: none;
+  }
+
+  .drop-toggle:focus-visible {
+    outline: 1px solid #fff;
   }
 
   /* ───── LP 아래 음원 재생 표시 (장식) ───── */
@@ -582,6 +633,28 @@
     <div class="site-title">MuteF</div>
   </header>
 
+  <!-- 상단 메뉴 창: 항목을 추가하면 세로로 쌓임. data-href = 이동할 파일 -->
+  <nav class="drop-menu" id="dropMenu" aria-label="바로가기">
+    <ul class="drop-list" id="dropList">
+      <li>
+        <button class="menu-link" type="button" data-href="calender.html">
+          <span class="arrow" aria-hidden="true">&gt;</span><span>일정</span>
+        </button>
+      </li>
+    </ul>
+
+    <button class="drop-toggle" id="dropToggle" type="button"
+            aria-expanded="false" aria-controls="dropList" aria-label="메뉴 열기">
+      <!-- 픽셀 화살표 (아래 방향, 열리면 뒤집힘) -->
+      <svg viewBox="0 0 7 4" aria-hidden="true">
+        <rect x="0" y="0" width="1" height="1"/><rect x="6" y="0" width="1" height="1"/>
+        <rect x="1" y="1" width="1" height="1"/><rect x="5" y="1" width="1" height="1"/>
+        <rect x="2" y="2" width="1" height="1"/><rect x="4" y="2" width="1" height="1"/>
+        <rect x="3" y="3" width="1" height="1"/>
+      </svg>
+    </button>
+  </nav>
+
   <main class="home-page">
     <div class="turntable-stage">
       <div class="record" aria-label="회전하는 LP">
@@ -589,17 +662,6 @@
         <div class="center-hole" aria-hidden="true"></div>
         <div class="shine-mirror" aria-hidden="true"></div>
       </div>
-
-      <!-- LP 위 메뉴: 항목을 추가하면 세로로 쌓임. data-href = 이동할 파일 -->
-      <nav aria-label="바로가기">
-        <ul class="lp-menu">
-          <li>
-            <button class="lp-link" type="button" data-href="calender.html">
-              <span class="arrow" aria-hidden="true">&gt;</span><span>일정</span>
-            </button>
-          </li>
-        </ul>
-      </nav>
 
       <!-- LP 아래 음원 재생 표시 — 장식용, 기능 없음 -->
       <div class="player" aria-hidden="true">
@@ -676,8 +738,31 @@
       });
     });
 
-    // LP 위 메뉴: 터치하는 동안 > 표시, 누르면 잠깐 보여준 뒤 이동
-    document.querySelectorAll(".lp-link").forEach(function(link) {
+    // 상단 메뉴 창 열기/닫기
+    const dropMenu = document.getElementById("dropMenu");
+    const dropToggle = document.getElementById("dropToggle");
+
+    function setDropMenu(open) {
+      dropMenu.classList.toggle("open", open);
+      dropToggle.setAttribute("aria-expanded", String(open));
+      dropToggle.setAttribute("aria-label", open ? "메뉴 닫기" : "메뉴 열기");
+    }
+
+    dropToggle.addEventListener("click", function() {
+      setDropMenu(!dropMenu.classList.contains("open"));
+    });
+
+    // 창 바깥을 누르거나 Esc를 누르면 닫힘
+    document.addEventListener("pointerdown", function(event) {
+      if (!event.target.closest("#dropMenu")) setDropMenu(false);
+    });
+
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Escape") setDropMenu(false);
+    });
+
+    // 메뉴 항목: 터치하는 동안 > 표시, 누르면 잠깐 보여준 뒤 이동
+    document.querySelectorAll(".menu-link").forEach(function(link) {
       link.addEventListener("pointerdown", function() {
         link.classList.add("touching");
       });
