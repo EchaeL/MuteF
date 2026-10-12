@@ -162,7 +162,14 @@
   }
 
   @media (max-width: 480px) {
-  
+  .drop-toggle {
+    left: 12px;
+  }
+
+  .drop-list {
+    padding-left: 6px;
+  }
+
   .sidebar {
     position: fixed;
     top: 0;
@@ -367,10 +374,10 @@
   .drop-list {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;   /* 왼쪽부터 배치 */
     gap: 0.5em;
     margin: 0;
-    padding: 22px 16px 26px;
+    padding: 22px 16px 26px 12px;
     list-style: none;
     font-family: "Galmuri11", "Galmuri9", monospace;
     font-size: 18px;
@@ -380,8 +387,7 @@
   .drop-toggle {
     position: absolute;
     top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 18px;               /* 왼쪽 — 햄버거 버튼과 같은 선 */
     width: 64px;
     height: 26px;
     display: flex;
