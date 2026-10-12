@@ -91,6 +91,65 @@
     flex: 0 0 22px;
   }
 
+  /* 사이드바: 메뉴는 위, 프로필은 맨 아래 */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-profile {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 12px 4px;
+    border-top: 1px solid #2b2b2b;
+    color: #f5f5f5;
+  }
+
+  .profile-avatar {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #555;
+    border-radius: 50%;
+    background: #262626;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    font-size: 17px;
+  }
+
+  .profile-info {
+    min-width: 0;
+  }
+
+  .profile-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    font-size: 16px;
+  }
+
+  .profile-action {
+    margin-top: 3px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #a8a8a8;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  .profile-action:hover {
+    color: #f5f5f5;
+  }
+
   .sidebar-overlay {
     position: fixed;
     inset: 0;
@@ -293,7 +352,26 @@
       </svg>
       <span>Schedule</span>
     </button>
+    <button class="sidebar-link" type="button" data-href="members.html">
+      <svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="9" cy="8" r="3.2"
+                fill="none" stroke="currentColor" stroke-width="1.7"/>
+        <path d="M3.5 19.5c0-3.2 2.5-5.6 5.5-5.6s5.5 2.4 5.5 5.6M16.3 5.6a2.8 2.8 0 0 1 0 5.4M17 14.1c2.1.5 3.5 2.6 3.5 5.4"
+              fill="none" stroke="currentColor" stroke-width="1.7"
+              stroke-linecap="round"/>
+      </svg>
+      <span>Members</span>
+    </button>
   </nav>
+
+  <!-- 로그인한 ID 프로필 (사이드바 맨 아래) -->
+  <div class="sidebar-profile">
+    <div class="profile-avatar" id="profileAvatar" aria-hidden="true"></div>
+    <div class="profile-info">
+      <div class="profile-name" id="profileName"></div>
+      <button class="profile-action" id="profileAction" type="button"></button>
+    </div>
+  </div>
 </aside>
 
 
@@ -370,9 +448,20 @@
     }
 
     message.textContent = "";
+
+    // 다른 화면(사이드바 프로필 등)에서도 알 수 있게 로그인한 ID를 저장
+    try {
+      localStorage.setItem(USER_KEY, matchedID);
+    } catch (e) { /* 저장이 막힌 환경 — 이 화면에서만 로그인 상태 */ }
+
+    showLoggedIn(matchedID);
+    renderProfile();
+  }
+
+  function showLoggedIn(id) {
     loginScreen.classList.add("hidden");
     homeScreen.classList.remove("hidden");
-    loggedInAs.textContent = `Logged in as ${matchedID}`;
+    loggedInAs.textContent = `Logged in as ${id}`;
   }
 
   // 미리보기 화면 등 폼 제출이 막힌 환경에서도 작동하도록
@@ -428,12 +517,47 @@
     });
   });
 
+  // ───── 사이드바 아래 프로필: index.html에서 로그인한 ID ─────
+  // (이 브라우저에 저장된 값이라 진짜 보안 로그인은 아님)
+  const USER_KEY = "mutef-user";
+
+  function getCurrentUser() {
+    try {
+      return localStorage.getItem(USER_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function renderProfile() {
+    const user = getCurrentUser();
+    document.getElementById("profileAvatar").textContent = user ? user.charAt(0).toUpperCase() : "?";
+    document.getElementById("profileName").textContent = user || "로그인 안 됨";
+    document.getElementById("profileAction").textContent = user ? "로그아웃" : "로그인";
+  }
+
+  // 로그아웃: 저장된 ID를 지우고 로그인 화면으로 / 로그인 안 됐으면 로그인 화면으로
+  document.getElementById("profileAction").addEventListener("click", function() {
+    try {
+      localStorage.removeItem(USER_KEY);
+    } catch (e) { /* 무시 */ }
+    window.location.href = "index.html";
+  });
+
+  renderProfile();
+
   // 메뉴 버튼이 아닌 다른 곳을 누르면 박스가 사라짐
   document.addEventListener("pointerdown", function(event) {
     if (!event.target.closest(".sidebar-link")) {
       sidebarLinks.forEach(link => link.classList.remove("active"));
     }
   });
+
+  // 이미 로그인한 ID가 저장돼 있으면 바로 로그인 후 화면
+  const savedUser = getCurrentUser();
+  if (savedUser && allowedIDs.includes(savedUser)) {
+    showLoggedIn(savedUser);
+  }
 </script>
 
 </body>

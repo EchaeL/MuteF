@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Members</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #121212;
+    --text: #f5f5f5;
+    --muted: #a8a8a8;
+    --line: #2b2b2b;
+    --input: #f4f4f4;
+    --input-text: #171717;
+
+    /* 이 페이지(흰 배경)용 색 */
+    --page-bg: #ffffff;
+    --page-text: #111111;
+    --cell-select: #e2e2e2;
+    --myeongjo: "Nanum Myeongjo", "Noto Serif KR", "AppleMyungjo", "Batang", "바탕", serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--page-bg);
+    color: var(--page-text);
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  body {
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* 상단 바: 흰색을 깔아서 스크롤해도 아래 내용과 겹치지 않게,
+     팝업을 포함한 다른 모든 화면보다 위 레이어 */
+  .site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 68px;
+    background: var(--page-bg);
+    z-index: 1000;
+  }
+
+  /* 흰 배경이므로 MuteF 글씨는 검은색 (위치는 Home과 동일) */
+  .site-title {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    color: #000;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.5px;
+  }
+
+  /* ───── 사이드바: Home.html과 동일 ───── */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(280px, 82vw);
+    height: 100vh;
+    background: #181818;
+    border-right: 1px solid var(--line);
+    z-index: 20;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    padding: 24px 18px;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close {
+    width: 42px;
+    height: 42px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    cursor: pointer;
+    margin-bottom: 28px;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .sidebar-link:hover {
+    background: #222;
+  }
+
+  .sidebar-link.active {
+    background: #222;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+  }
+
+  .home-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+  }
+
+  /* 사이드바: 메뉴는 위, 프로필은 맨 아래 */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-profile {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 12px 4px;
+    border-top: 1px solid #2b2b2b;
+    color: #f5f5f5;
+  }
+
+  .profile-avatar {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #555;
+    border-radius: 50%;
+    background: #262626;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    font-size: 17px;
+  }
+
+  .profile-info {
+    min-width: 0;
+  }
+
+  .profile-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    font-size: 16px;
+  }
+
+  .profile-action {
+    margin-top: 3px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #a8a8a8;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  .profile-action:hover {
+    color: #f5f5f5;
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 15;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .sidebar-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .menu-button {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    width: 42px;
+    height: 42px;
+    padding: 8px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  /* 흰 배경이므로 햄버거 버튼은 검은색 */
+  .menu-button span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    margin: 5px auto;
+    background: #000;
+    border-radius: 2px;
+  }
+
+  @media (max-width: 480px) {
+    .menu-button {
+      top: 12px;
+      left: 12px;
+    }
+  }
+  /* ───── 사이드바 끝 ───── */
+
+  .hidden {
+    display: none !important;
+  }
+
+  main {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 84px 16px 28px;
+  }
+
+  /* 검은 띠로 둘러진 둥근 직사각형 — 상단 가운데가 끊기고 그 자리에 제목 */
+  .frame {
+    width: min(560px, 100%);
+    margin: 0;
+    padding: 18px 18px 22px;
+    border: 3px solid #000;
+    border-radius: 22px;
+    min-width: 0;
+  }
+
+  .frame-title {
+    margin: 0 auto;
+    padding: 0 14px;
+    font-family: var(--myeongjo);
+    font-size: 24px;
+    font-weight: 700;
+    color: #000;
+    line-height: 1;
+  }
+
+  .members-intro {
+    margin: 4px 0 18px;
+    text-align: center;
+    font-family: var(--myeongjo);
+    font-size: 14px;
+    color: #666;
+  }
+
+  .member-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .member-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 12px;
+    border: 1px solid #d6d6d6;
+    border-radius: 12px;
+    background: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  }
+
+  /* 지금 로그인한 ID 카드 */
+  .member-card.me {
+    border: 2px solid #000;
+  }
+
+  .member-avatar {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #000;
+    color: #fff;
+    font-size: 17px;
+  }
+
+  .member-name {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .me-badge {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-family: var(--myeongjo);
+    font-size: 12px;
+    font-weight: 700;
+    color: #000;
+  }
+</style>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar" aria-label="Main menu">
+      <button class="sidebar-close" id="sidebarClose" type="button" aria-label="Close menu">×</button>
+
+      <nav class="sidebar-nav">
+        <button class="sidebar-link" type="button" data-href="Home.html">
+          <svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1v-9.2Z"
+                  fill="none" stroke="currentColor" stroke-width="1.7"
+                  stroke-linejoin="round"/>
+          </svg>
+          <span>Home</span>
+        </button>
+        <button class="sidebar-link" type="button" data-href="calender.html">
+          <svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3.5" y="5" width="17" height="15.5" rx="1.5"
+                  fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M3.5 9.8h17M8 3v4M16 3v4"
+                  fill="none" stroke="currentColor" stroke-width="1.7"
+                  stroke-linecap="round"/>
+          </svg>
+          <span>Schedule</span>
+        </button>
+        <button class="sidebar-link" type="button" data-href="members.html">
+          <svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="9" cy="8" r="3.2"
+                    fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M3.5 19.5c0-3.2 2.5-5.6 5.5-5.6s5.5 2.4 5.5 5.6M16.3 5.6a2.8 2.8 0 0 1 0 5.4M17 14.1c2.1.5 3.5 2.6 3.5 5.4"
+                  fill="none" stroke="currentColor" stroke-width="1.7"
+                  stroke-linecap="round"/>
+          </svg>
+          <span>Members</span>
+        </button>
+      </nav>
+
+      <!-- 로그인한 ID 프로필 (사이드바 맨 아래) -->
+      <div class="sidebar-profile">
+        <div class="profile-avatar" id="profileAvatar" aria-hidden="true"></div>
+        <div class="profile-info">
+          <div class="profile-name" id="profileName"></div>
+          <button class="profile-action" id="profileAction" type="button"></button>
+        </div>
+      </div>
+    </aside>
+
+    <button class="menu-button" type="button" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="site-title">MuteF</div>
+  </header>
+
+  <main>
+    <fieldset class="frame">
+      <legend class="frame-title">Members</legend>
+
+      <p class="members-intro">각자 좋아하는 것들을 올리는 공간 (준비 중)</p>
+
+      <ul class="member-grid" id="memberGrid"></ul>
+    </fieldset>
+  </main>
+
+  <script>
+    /* ───── 사이드바 ───── */
+    const sidebar = document.getElementById("sidebar");
+    const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+    function openSidebar() {
+      sidebar.classList.add("open");
+      sidebarOverlay.classList.add("open");
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove("open");
+      sidebarOverlay.classList.remove("open");
+    }
+
+    document.querySelector(".menu-button").addEventListener("click", openSidebar);
+    document.getElementById("sidebarClose").addEventListener("click", closeSidebar);
+    sidebarOverlay.addEventListener("click", closeSidebar);
+
+    // 사이드바 메뉴: 누르면 박스 표시 후 해당 파일로 이동
+    // 파일 이름이나 위치가 바뀌면 각 버튼의 data-href만 수정하면 됩니다.
+    const sidebarLinks = document.querySelectorAll(".sidebar-link");
+
+    sidebarLinks.forEach(function(link) {
+      link.addEventListener("click", function() {
+        link.classList.add("active");
+        window.location.href = link.dataset.href;
+      });
+    });
+
+    // ───── 사이드바 아래 프로필: index.html에서 로그인한 ID ─────
+    // (이 브라우저에 저장된 값이라 진짜 보안 로그인은 아님)
+    const USER_KEY = "mutef-user";
+
+    function getCurrentUser() {
+      try {
+        return localStorage.getItem(USER_KEY);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function renderProfile() {
+      const user = getCurrentUser();
+      document.getElementById("profileAvatar").textContent = user ? user.charAt(0).toUpperCase() : "?";
+      document.getElementById("profileName").textContent = user || "로그인 안 됨";
+      document.getElementById("profileAction").textContent = user ? "로그아웃" : "로그인";
+    }
+
+    // 로그아웃: 저장된 ID를 지우고 로그인 화면으로 / 로그인 안 됐으면 로그인 화면으로
+    document.getElementById("profileAction").addEventListener("click", function() {
+      try {
+        localStorage.removeItem(USER_KEY);
+      } catch (e) { /* 무시 */ }
+      window.location.href = "index.html";
+    });
+
+    renderProfile();
+
+    // 메뉴 버튼이 아닌 다른 곳을 누르면 박스가 사라짐
+    document.addEventListener("pointerdown", function(event) {
+      if (!event.target.closest(".sidebar-link")) {
+        sidebarLinks.forEach(link => link.classList.remove("active"));
+      }
+    });
+
+    /* ───── 멤버 목록 ───── */
+    // index.html의 아이디 목록에서 관리자(echae)·테스트용(friend1, friend2)을 뺀 것
+    const MEMBERS = [
+      "권은서",
+      "정수인",
+      "김서현",
+      "이선우",
+      "김현재",
+      "한경원",
+      "한지후"
+    ];
+
+    const memberGrid = document.getElementById("memberGrid");
+    const me = getCurrentUser();
+
+    MEMBERS.forEach(function(name) {
+      const card = document.createElement("li");
+      card.className = name === me ? "member-card me" : "member-card";
+
+      const avatar = document.createElement("span");
+      avatar.className = "member-avatar";
+      avatar.setAttribute("aria-hidden", "true");
+      avatar.textContent = name.charAt(0);
+
+      const label = document.createElement("span");
+      label.className = "member-name";
+      label.textContent = name;
+
+      card.append(avatar, label);
+
+      if (name === me) {
+        const badge = document.createElement("span");
+        badge.className = "me-badge";
+        badge.textContent = "나";
+        card.appendChild(badge);
+      }
+
+      memberGrid.appendChild(card);
+    });
+  </script>
+</body>
+</html>
