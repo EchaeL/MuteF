@@ -271,8 +271,7 @@
   }
 
   /* ───── 1. 멤버 목록: 각자 대표(또는 최근) 게시물 사진 + 제목 ───── */
-  .member-grid,
-  .post-grid {
+  .member-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
@@ -281,8 +280,7 @@
     list-style: none;
   }
 
-  .member-card,
-  .post-open {
+  .member-card {
     position: relative;
     display: block;
     width: 100%;
@@ -397,21 +395,98 @@
     background: #f0f0f0;
   }
 
-  /* ───── 2. 멤버별 피드 ───── */
-  .post-card {
-    position: relative;
+  /* ───── 2. 게시물 목록 (트위터처럼 한 줄씩) ───── */
+  .tweet-list {
+    border-top: 1px solid #e6e6e6;
   }
 
-  .pin-badge {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    padding: 3px 8px;
+  .tweet {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    padding: 14px 2px;
+    border-bottom: 1px solid #e6e6e6;
+  }
+
+  .tweet-avatar {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #000;
+    color: #fff;
+    font-size: 17px;
+  }
+
+  .tweet-body {
+    flex: 1;
+    min-width: 0;
+    display: block;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #111;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .tweet-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 22px;
+    padding-right: 34px;      /* ⋮ 버튼 자리 */
+    font-size: 15px;
+  }
+
+  .tweet-name {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-weight: 700;
+  }
+
+  .tweet-time {
+    flex: 0 0 auto;
+    color: #888;
+    white-space: nowrap;
+  }
+
+  .tweet-time::before {
+    content: "· ";
+  }
+
+  .tweet-pin {
+    flex: 0 0 auto;
+    padding: 2px 7px;
     border-radius: 999px;
     background: #000;
     color: #fff;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
+  }
+
+  .tweet-title {
+    margin-top: 4px;
+    font-size: 15px;
+    line-height: 1.45;
+    word-break: break-all;
+  }
+
+  .tweet-photo {
+    display: block;
+    width: 100%;
+    max-height: 420px;
+    margin-top: 10px;
+    object-fit: cover;
+    border: 1px solid #e6e6e6;
+    border-radius: 14px;
+    background: #f1f1f1;
   }
 
   .empty-note {
@@ -443,6 +518,16 @@
   .kebab svg {
     width: 18px;
     height: 18px;
+  }
+
+  .tweet .kebab {
+    top: 8px;
+    right: 0;
+    background: transparent;
+  }
+
+  .tweet .kebab:hover {
+    background: #f0f0f0;
   }
 
   .view-head .kebab {
@@ -544,6 +629,12 @@
     object-fit: contain;
     border-radius: 12px;
     background: #f1f1f1;
+  }
+
+  .post-time {
+    margin: 8px 2px 0;
+    font-size: 14px;
+    color: #888;
   }
 
   .post-title {
@@ -734,6 +825,16 @@
           </svg>
           <span>Members</span>
         </button>
+        <button class="sidebar-link" type="button" data-href="timeline.html">
+          <svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5"
+                    fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M12 7.5V12l3 2"
+                  fill="none" stroke="currentColor" stroke-width="1.7"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Timeline</span>
+        </button>
       </nav>
 
       <!-- 로그인한 ID 프로필 (사이드바 맨 아래) -->
@@ -768,7 +869,7 @@
         <button class="back-button" id="feedBack" type="button" aria-label="뒤로">&lsaquo;</button>
         <h1 id="feedTitle"></h1>
       </div>
-      <ul class="post-grid" id="postGrid"></ul>
+      <div class="tweet-list" id="postGrid"></div>
       <p class="empty-note hidden" id="feedEmpty"></p>
     </section>
 
@@ -780,6 +881,7 @@
       </div>
       <img class="post-photo hidden" id="postPhoto" alt="">
       <h2 class="post-title" id="postTitle"></h2>
+      <p class="post-time" id="postTime"></p>
       <!-- 여기에 넣을 내용은 나중에 추가 -->
     </section>
 
@@ -903,6 +1005,7 @@
     ];
 
     const me = getCurrentUser();
+    const PAGE = "members";   // members: 피드 / timeline: 타임라인
 
     /* ───── 게시물 저장소 (Supabase: posts 표 + post-images 사진 보관함) ───── */
     // 공개용(publishable) 키라 html에 들어가도 되는 값. 접근 규칙은 supabase/migrations/ 의 SQL에서 관리
@@ -1018,8 +1121,9 @@
       return name === me ? "나" : name;
     }
 
+    // 피드 게시물 (타임라인에 바로 올린 글은 피드에 안 보임)
     function postsOf(name) {
-      return posts.filter(p => p.author === name);
+      return posts.filter(p => p.author === name && p.source !== "timeline");
     }
 
     // 대표로 지정한 게시물이 먼저, 없으면 최근 순
@@ -1030,6 +1134,63 @@
 
     function findPost(id) {
       return posts.find(p => p.id === id);
+    }
+
+    /* ───── 게시물 한 줄 (트위터 형식) — 피드와 타임라인 공통 ───── */
+    function photoEl(path, className) {
+      const img = document.createElement("img");
+      img.className = className;
+      img.src = imageUrl(path);
+      img.alt = "";
+      img.loading = "lazy";
+      return img;
+    }
+
+    function textEl(tag, className, text) {
+      const el = document.createElement(tag);
+      el.className = className;
+      el.textContent = text;
+      return el;
+    }
+
+    // 얼마 전에 올라왔는지: 분 → 시간 → 일(30일까지) → 개월 → 년
+    function timeAgo(iso) {
+      const minutes = Math.floor(Math.max(0, Date.now() - new Date(iso).getTime()) / 60000);
+      if (minutes < 1) return "방금 전";
+      if (minutes < 60) return `${minutes}분 전`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}시간 전`;
+      const days = Math.floor(hours / 24);
+      if (days <= 30) return `${days}일 전`;
+      const months = Math.floor(days / 30);
+      if (months < 12) return `${months}개월 전`;
+      return `${Math.max(1, Math.floor(days / 365))}년 전`;
+    }
+
+    function tweetEl(post) {
+      const item = document.createElement("article");
+      item.className = "tweet";
+
+      const avatar = textEl("div", "tweet-avatar", post.author.charAt(0).toUpperCase());
+      avatar.setAttribute("aria-hidden", "true");
+
+      const head = document.createElement("div");
+      head.className = "tweet-head";
+      head.append(
+        textEl("span", "tweet-name", displayName(post.author)),
+        textEl("span", "tweet-time", timeAgo(post.created_at))
+      );
+      if (PAGE === "members" && post.pinned) head.appendChild(textEl("span", "tweet-pin", "대표"));
+
+      const body = document.createElement("button");
+      body.type = "button";
+      body.className = "tweet-body";
+      body.append(head, textEl("div", "tweet-title", post.title));
+      if (post.image_path) body.appendChild(photoEl(post.image_path, "tweet-photo"));
+      body.addEventListener("click", () => navigate(`post/${post.id}`));
+
+      item.append(avatar, body, ...menuFor(post));
+      return item;
     }
 
     /* ───── 화면 전환 (같은 html, 주소의 #으로 구분) ─────
@@ -1045,6 +1206,12 @@
       form: document.getElementById("formView")
     };
     const fab = document.getElementById("fab");
+    const NEW_POST_SOURCE = "feed";   // 피드에 올린 글 — 타임라인에도 자동으로 보임
+
+    // 게시물을 다 보고 돌아갈 화면: 그 사람의 피드
+    function listRoute(author) {
+      return `feed/${author}`;
+    }
 
     let currentRoute = readHash();
 
@@ -1064,7 +1231,10 @@
       render();
     }
 
+    // 뒤로가기·앞으로가기로 주소가 바뀌었을 때만 다시 그림
+    // (navigate()로 바꾼 주소는 이미 그렸으니 다시 그리면 입력하던 내용이 지워짐)
     window.addEventListener("hashchange", function() {
+      if (readHash() === currentRoute) return;
       currentRoute = readHash();
       render();
     });
@@ -1104,22 +1274,6 @@
     /* ───── 1. 멤버 목록 ───── */
     const memberGrid = document.getElementById("memberGrid");
     const listNote = document.getElementById("listNote");
-
-    function photoEl(path, className) {
-      const img = document.createElement("img");
-      img.className = className;
-      img.src = imageUrl(path);
-      img.alt = "";
-      img.loading = "lazy";
-      return img;
-    }
-
-    function textEl(tag, className, text) {
-      const el = document.createElement(tag);
-      el.className = className;
-      el.textContent = text;
-      return el;
-    }
 
     function renderList() {
       showView("list");
@@ -1164,30 +1318,11 @@
       postGrid.innerHTML = "";
 
       const list = sortedPostsOf(name);
-      list.forEach(function(post) {
-        const li = document.createElement("li");
-        li.className = "post-card";
-
-        const open = document.createElement("button");
-        open.type = "button";
-        open.className = "post-open";
-        open.setAttribute("aria-label", post.title || "게시물");
-        if (post.image_path) {
-          open.append(photoEl(post.image_path, "card-photo"), textEl("span", "card-shade", ""));
-        } else {
-          open.classList.add("no-photo");
-        }
-        if (post.pinned) open.appendChild(textEl("span", "pin-badge", "대표"));
-        open.appendChild(textEl("span", "card-title", post.title));
-        open.addEventListener("click", () => navigate(`post/${post.id}`));
-
-        li.append(open, ...menuFor(post));
-        postGrid.appendChild(li);
-      });
+      list.forEach(post => postGrid.appendChild(tweetEl(post)));
 
       feedEmpty.classList.toggle("hidden", list.length > 0);
       feedEmpty.textContent = !postsLoaded ? "불러오는 중…"
-        : name === me ? "왼쪽 아래 + 를 눌러 첫 게시물을 올려 보세요."
+        : name === me ? "오른쪽 아래 + 를 눌러 첫 게시물을 올려 보세요."
         : "아직 게시물이 없어요.";
 
       // 내 피드에서만 + 버튼
@@ -1215,8 +1350,12 @@
       const menu = document.createElement("div");
       menu.className = "post-menu hidden";
 
+      // 대표 지정은 피드(members)에서 피드 게시물만
+      const canPin = PAGE === "members" && post.source !== "timeline";
       const items = post.author === me
-        ? [["edit", "수정"], ["delete", "삭제"], ["pin", post.pinned ? "대표 해제" : "대표로 지정"], ["share", "공유"]]
+        ? [["edit", "수정"], ["delete", "삭제"],
+           ...(canPin ? [["pin", post.pinned ? "대표 해제" : "대표로 지정"]] : []),
+           ["share", "공유"]]
         : [["share", "공유"]];
 
       items.forEach(function([action, label]) {
@@ -1313,6 +1452,7 @@
       showView("post");
       document.getElementById("postAuthor").textContent = displayName(post.author);
       document.getElementById("postTitle").textContent = post.title;
+      document.getElementById("postTime").textContent = timeAgo(post.created_at);
 
       postPhoto.classList.toggle("hidden", !post.image_path);
       postPhoto.src = imageUrl(post.image_path);
@@ -1323,7 +1463,7 @@
 
     document.getElementById("postBack").addEventListener("click", function() {
       const post = findPost(currentRoute.split("/")[1]);
-      navigate(post ? `feed/${post.author}` : "");
+      navigate(post ? listRoute(post.author) : "");
     });
 
     /* ───── 4. 게시물 작성 / 수정 (처음 작성 화면과 같은 화면) ───── */
@@ -1372,7 +1512,7 @@
     });
 
     function leaveForm() {
-      navigate(editingPost ? `post/${editingPost.id}` : `feed/${me}`);
+      navigate(editingPost ? `post/${editingPost.id}` : listRoute(me));
     }
 
     document.getElementById("formBack").addEventListener("click", leaveForm);
@@ -1406,9 +1546,9 @@
           Object.assign(editingPost, rows[0]);
           navigate(`post/${editingPost.id}`);
         } else {
-          const row = await insertPost({ author: me, title, image_path: newPath || "" });
+          const row = await insertPost({ author: me, title, image_path: newPath || "", source: NEW_POST_SOURCE });
           posts.unshift(row);
-          navigate(`feed/${me}`);
+          navigate(listRoute(me));
         }
       } catch (e) {
         console.error(e);
@@ -1469,7 +1609,7 @@
       removeImage(post.image_path);
       posts = posts.filter(p => p.id !== post.id);
       closeConfirm();
-      navigate(`feed/${post.author}`);
+      navigate(listRoute(post.author));
     });
 
     document.addEventListener("keydown", function(event) {

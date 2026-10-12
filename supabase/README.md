@@ -10,7 +10,7 @@ MuteF 사이트가 쓰는 Supabase 프로젝트(MuteFweb)의 데이터베이스 
 | 표 | 쓰는 곳 | 내용 |
 | --- | --- | --- |
 | `events` | `calender.html` | 일정 (제목, 날짜, 장소 이름/링크, 참여 인원, 메모) |
-| `posts` | `members.html` | 멤버 게시물 (작성자 ID, 제목, 사진 경로, 대표 여부) |
+| `posts` | `members.html`, `timeline.html` | 게시물 (작성자 ID, 제목, 사진 경로, 대표 여부, 올린 곳 `source`: `feed`면 피드+타임라인, `timeline`이면 타임라인만) |
 
 사진은 Storage 보관함 `post-images`(공개 읽기)에 저장.
 
