@@ -71,6 +71,7 @@
     left: 0;
     width: min(280px, 82vw);
     height: 100vh;
+    height: 100dvh;           /* 휴대폰: 주소창·하단바를 뺀 실제 보이는 높이 */
     background: #181818;
     border-right: 1px solid var(--line);
     z-index: 20;
@@ -137,10 +138,12 @@
   .sidebar {
     display: flex;
     flex-direction: column;
+    overflow-y: auto;         /* 화면이 낮으면 사이드바 안에서 스크롤 */
   }
 
   .sidebar-profile {
     margin-top: auto;
+    margin-bottom: 28px;      /* 맨 밑에 붙지 않게 조금 위로 */
     display: flex;
     align-items: center;
     gap: 12px;
