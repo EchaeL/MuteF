@@ -10,5 +10,8 @@ MuteF 사이트가 쓰는 Supabase 프로젝트(MuteFweb)의 데이터베이스 
 | 표 | 쓰는 곳 | 내용 |
 | --- | --- | --- |
 | `events` | `calender.html` | 일정 (제목, 날짜, 장소 이름/링크, 참여 인원, 메모) |
+| `posts` | `members.html` | 멤버 게시물 (작성자 ID, 제목, 사진 경로, 대표 여부) |
 
-공개(publishable) 키로 `events`를 읽기·추가·수정·삭제할 수 있음 (아직 진짜 로그인이 없어서). 로그인을 붙이면 규칙을 좁힐 것.
+사진은 Storage 보관함 `post-images`(공개 읽기)에 저장.
+
+공개(publishable) 키로 `events`, `posts`를 읽기·추가·수정·삭제할 수 있음 (아직 진짜 로그인이 없어서). 로그인을 붙이면 규칙을 좁힐 것.
