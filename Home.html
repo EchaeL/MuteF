@@ -162,14 +162,7 @@
   }
 
   @media (max-width: 480px) {
-  .drop-toggle {
-    left: 66px;               /* 모바일 햄버거 버튼(12~54px) 바로 오른쪽 */
-  }
-
-  .drop-list {
-    padding-left: 59px;
-  }
-
+  
   .sidebar {
     position: fixed;
     top: 0;
@@ -371,11 +364,16 @@
     box-shadow: 0 14px 30px rgba(0,0,0,.55);
   }
 
+  /* 메뉴는 세로로 3개씩, 넘치면 오른쪽 열로. 항목이 적어도 창은 3줄 높이 */
   .drop-list {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;   /* 왼쪽부터 배치 */
-    gap: 0.5em;
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(3, 1.7em);
+    grid-auto-columns: max-content;
+    justify-content: start;   /* 왼쪽부터 배치 */
+    align-items: center;
+    row-gap: 0.5em;
+    column-gap: 2em;
     margin: 0;
     padding: 22px 16px 26px 69px;   /* 햄버거 버튼 영역(왼쪽 60px)은 비워 둠 */
     list-style: none;
@@ -413,6 +411,16 @@
   /* 열리면 화살표가 위를 향함 */
   .drop-menu.open .drop-toggle svg {
     transform: rotate(180deg);
+  }
+
+  @media (max-width: 480px) {
+    .drop-toggle {
+      left: 66px;             /* 모바일 햄버거 버튼(12~54px) 바로 오른쪽 */
+    }
+
+    .drop-list {
+      padding-left: 59px;
+    }
   }
 
   .menu-link {
