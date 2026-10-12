@@ -473,20 +473,8 @@
     height: 42px;
   }
 
-  /* 피드: 내용 옆에 시간 (한 사람 것만 보이니 프로필·이름 없음) */
-  .tweet-feed .tweet-head {
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .tweet-feed .tweet-text {
-    flex: 1;
-    min-width: 0;
-    margin-top: 0;
-  }
-
+  /* 피드: 윗줄 시간(대표), 아랫줄부터 내용 (한 사람 것만 보이니 프로필·이름 없음) */
   .tweet-feed .tweet-time {
-    padding-top: 1px;
     font-size: 13px;
   }
 
@@ -1522,16 +1510,14 @@
       });
 
       if (PAGE === "members") {
-        // 피드는 한 사람 것만 보이니 프로필·이름 없이 내용 옆에 시간
+        // 피드는 한 사람 것만 보이니 프로필·이름 없이: 윗줄 시간(대표), 아랫줄부터 내용
         item.className = "tweet tweet-feed";
         const head = document.createElement("div");
         head.className = "tweet-head";
-        head.append(
-          textEl("div", "tweet-text", post.content),
-          textEl("span", "tweet-time", timeAgo(post.created_at))
-        );
+        head.appendChild(textEl("span", "tweet-time", timeAgo(post.created_at)));
         if (post.pinned) head.appendChild(textEl("span", "tweet-pin", "대표"));
         body.appendChild(head);
+        if (post.content) body.appendChild(textEl("div", "tweet-text", post.content));
         if (post.image_path) body.appendChild(photoEl(post.image_path, "tweet-photo"));
         item.append(body, ...menuFor(post));
         return item;
