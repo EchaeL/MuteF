@@ -499,10 +499,10 @@
     color: #c62828;
   }
 
-  /* 내 피드에서만: 왼쪽 아래 동그라미 + 버튼 */
+  /* 내 피드에서만: 오른쪽 아래 동그라미 + 버튼 */
   .fab {
     position: fixed;
-    left: 20px;
+    right: 20px;
     bottom: 24px;
     z-index: 50;
     width: 58px;
@@ -514,12 +514,26 @@
     border: 0;
     border-radius: 50%;
     background: #000;
-    color: #fff;
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 34px;
-    line-height: 1;
     box-shadow: 0 6px 16px rgba(0,0,0,.25);
     cursor: pointer;
+  }
+
+  /* + 는 글자 대신 가로·세로 막대 두 개로 그려서 동그라미 정중앙에 맞춤 */
+  .fab::before,
+  .fab::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 3px;
+    border-radius: 2px;
+    background: #fff;
+    transform: translate(-50%, -50%);
+  }
+
+  .fab::after {
+    transform: translate(-50%, -50%) rotate(90deg);
   }
 
   /* ───── 3. 게시물 (하나의 화면) ───── */
@@ -794,7 +808,7 @@
   </main>
 
   <!-- 내 피드에서만 보이는 게시물 올리기 버튼 -->
-  <button class="fab hidden" id="fab" type="button" aria-label="게시물 올리기">+</button>
+  <button class="fab hidden" id="fab" type="button" aria-label="게시물 올리기"></button>
 
   <!-- 삭제 확인 팝업 -->
   <div class="modal-backdrop hidden" id="confirmModal">
@@ -999,6 +1013,11 @@
       }
     }
 
+    // 화면에 보이는 이름: 자기 ID면 "나"
+    function displayName(name) {
+      return name === me ? "나" : name;
+    }
+
     function postsOf(name) {
       return posts.filter(p => p.author === name);
     }
@@ -1113,7 +1132,7 @@
         card.type = "button";
         card.className = "member-card";
         if (name === me) card.classList.add("me");
-        card.setAttribute("aria-label", `${name}의 피드`);
+        card.setAttribute("aria-label", `${displayName(name)}의 피드`);
 
         if (cover && cover.image_path) {
           card.append(photoEl(cover.image_path, "card-photo"), textEl("span", "card-shade", ""));
@@ -1123,7 +1142,7 @@
         if (!cover) card.classList.add("card-empty");
 
         card.append(
-          textEl("span", "card-name", name),
+          textEl("span", "card-name", displayName(name)),
           textEl("span", "card-title", cover ? cover.title : (postsLoaded ? "아직 게시물이 없어요" : ""))
         );
 
@@ -1141,7 +1160,7 @@
 
     function renderFeed(name) {
       showView("feed");
-      document.getElementById("feedTitle").textContent = name === me ? `${name} (나)` : name;
+      document.getElementById("feedTitle").textContent = displayName(name);
       postGrid.innerHTML = "";
 
       const list = sortedPostsOf(name);
@@ -1292,7 +1311,7 @@
 
     function renderPost(post) {
       showView("post");
-      document.getElementById("postAuthor").textContent = post.author;
+      document.getElementById("postAuthor").textContent = displayName(post.author);
       document.getElementById("postTitle").textContent = post.title;
 
       postPhoto.classList.toggle("hidden", !post.image_path);
