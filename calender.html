@@ -513,8 +513,13 @@
   /* 제목(반) + 날짜(반) */
   .field-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);   /* 칸이 내용 때문에 넓어지지 않게 */
     gap: 10px;
+  }
+
+  .create-form input[type="date"]::-webkit-date-and-time-value {
+    margin: 0;
+    text-align: left;
   }
 
   .create-form input[type="text"],
@@ -539,6 +544,28 @@
     height: 72px;
     padding: 10px 12px;
     resize: vertical;
+  }
+
+  /* 날짜 칸: 휴대폰(특히 아이폰)의 기본 날짜 모양이 칸 밖으로 튀어나가지 않게 */
+  .create-form input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    max-width: 100%;
+    padding: 0 6px 0 10px;
+    line-height: 46px;
+    text-align: left;           /* 글씨는 16px 유지 — 더 작으면 아이폰이 눌렀을 때 화면을 확대함 */
+  }
+
+  .create-form input[type="date"]::-webkit-calendar-picker-indicator {
+    margin-left: 2px;
+    padding: 0;
+  }
+
+  /* 아주 좁은 휴대폰(아이폰 SE 등)에서는 날짜 칸 안쪽 여백을 줄임 */
+  @media (max-width: 360px) {
+    .create-form input[type="date"] {
+      padding: 0 2px 0 6px;
+    }
   }
 
   .create-form input:focus,
