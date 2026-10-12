@@ -152,18 +152,77 @@
     color: #f5f5f5;
   }
 
-  .profile-avatar {
-    flex: 0 0 40px;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #555;
+  .sidebar-profile {
+    position: relative;
+  }
+
+  /* 프로필 사진: 없으면 검은 바탕에 흰 흉상 (기본 이미지) */
+  .avatar {
+    display: block;
+    overflow: hidden;
     border-radius: 50%;
-    background: #262626;
+    background: #000;
+  }
+
+  .avatar img,
+  .avatar svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .profile-avatar {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid #555;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .profile-avatar:disabled {
+    cursor: default;
+  }
+
+  /* 프로필 사진을 누르면 뜨는 메뉴 */
+  .profile-menu {
+    position: absolute;
+    left: 10px;
+    bottom: calc(100% - 6px);
+    z-index: 1;
+    min-width: 140px;
+    padding: 4px;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    background: #222;
+    box-shadow: 0 6px 18px rgba(0,0,0,.4);
+  }
+
+  .profile-menu button {
+    display: block;
+    width: 100%;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: #f5f5f5;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
-    font-size: 17px;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .profile-menu button:hover {
+    background: #2e2e2e;
+  }
+
+  .profile-note {
+    margin-top: 2px;
+    color: #a8a8a8;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    font-size: 12px;
   }
 
   .profile-info {
@@ -889,10 +948,16 @@
 
       <!-- 로그인한 ID 프로필 (사이드바 맨 아래) -->
       <div class="sidebar-profile">
-        <div class="profile-avatar" id="profileAvatar" aria-hidden="true"></div>
+        <button class="profile-avatar avatar" id="profileAvatar" type="button" aria-label="프로필 사진"></button>
+        <input type="file" id="avatarInput" accept="image/*" hidden>
+        <div class="profile-menu hidden" id="profileMenu">
+          <button type="button" id="avatarChange">사진 변경</button>
+          <button type="button" id="avatarReset">기본 이미지로</button>
+        </div>
         <div class="profile-info">
           <div class="profile-name" id="profileName"></div>
           <button class="profile-action" id="profileAction" type="button"></button>
+          <div class="profile-note hidden" id="profileNote" aria-live="polite"></div>
         </div>
       </div>
     </aside>
@@ -1041,12 +1106,201 @@
       }
     }
 
+    // ───── 프로필 사진 (Supabase: profiles 표 + avatars 사진 보관함) ─────
+    const PROFILE_DB = {
+      url: "https://xbvormcnoexpxtjoioko.supabase.co",
+      key: "sb_publishable_WUlX-m46GveYJsrJ837LsQ_732EGb8R"
+    };
+    const AVATAR_CACHE_KEY = "mutef-avatar";   // 화면을 열자마자 보이도록 이 브라우저에 기억
+
+    // 기본 이미지: 검은 바탕에 흰 흉상
+    const DEFAULT_AVATAR = `<svg viewBox="0 0 40 40" aria-hidden="true">
+      <rect width="40" height="40" fill="#000"/>
+      <circle cx="20" cy="15.5" r="7" fill="#fff"/>
+      <path d="M5 40c0-8.6 6.7-14.5 15-14.5S35 31.4 35 40Z" fill="#fff"/>
+    </svg>`;
+
+    function avatarUrl(path) {
+      return `${PROFILE_DB.url}/storage/v1/object/public/avatars/${path}`;
+    }
+
+    // el 안에 프로필 사진(없으면 기본 이미지)을 그림
+    function fillAvatar(el, path) {
+      el.innerHTML = "";
+      if (path) {
+        const img = document.createElement("img");
+        img.src = avatarUrl(path);
+        img.alt = "";
+        img.onerror = () => { el.innerHTML = DEFAULT_AVATAR; };
+        el.appendChild(img);
+      } else {
+        el.innerHTML = DEFAULT_AVATAR;
+      }
+    }
+
+    function readAvatarCache() {
+      try {
+        const cache = JSON.parse(localStorage.getItem(AVATAR_CACHE_KEY));
+        return cache && cache.id === getCurrentUser() ? cache.path : "";
+      } catch (e) {
+        return "";
+      }
+    }
+
+    function writeAvatarCache(path) {
+      try {
+        localStorage.setItem(AVATAR_CACHE_KEY, JSON.stringify({ id: getCurrentUser(), path }));
+      } catch (e) { /* 무시 */ }
+    }
+
     function renderProfile() {
       const user = getCurrentUser();
-      document.getElementById("profileAvatar").textContent = user ? user.charAt(0).toUpperCase() : "?";
+      const avatar = document.getElementById("profileAvatar");
+      fillAvatar(avatar, user ? readAvatarCache() : "");
+      avatar.disabled = !user;
+      avatar.setAttribute("aria-label", user ? "프로필 사진 바꾸기" : "프로필 사진");
       document.getElementById("profileName").textContent = user || "로그인 안 됨";
       document.getElementById("profileAction").textContent = user ? "로그아웃" : "로그인";
+      if (user) refreshMyAvatar();
     }
+
+    // 저장된 내 프로필 사진 경로를 Supabase에서 다시 확인
+    async function refreshMyAvatar() {
+      const user = getCurrentUser();
+      try {
+        const res = await fetch(`${PROFILE_DB.url}/rest/v1/profiles?select=avatar_path&id=eq.${encodeURIComponent(user)}`, {
+          headers: { apikey: PROFILE_DB.key }
+        });
+        if (!res.ok) return;
+        const rows = await res.json();
+        const path = rows.length ? rows[0].avatar_path : "";
+        if (path !== readAvatarCache()) {
+          writeAvatarCache(path);
+          fillAvatar(document.getElementById("profileAvatar"), path);
+        }
+      } catch (e) { /* 인터넷이 안 되면 기억해 둔 사진 그대로 */ }
+    }
+
+    // 내 프로필 사진 저장 (path가 ""이면 기본 이미지)
+    async function saveMyAvatar(path) {
+      const res = await fetch(`${PROFILE_DB.url}/rest/v1/profiles?on_conflict=id`, {
+        method: "POST",
+        headers: {
+          apikey: PROFILE_DB.key,
+          "Content-Type": "application/json",
+          Prefer: "resolution=merge-duplicates,return=representation"
+        },
+        body: JSON.stringify({ id: getCurrentUser(), avatar_path: path, updated_at: new Date().toISOString() })
+      });
+      if (!res.ok) throw new Error(`프로필 저장 실패 (${res.status})`);
+    }
+
+    // 사진을 가운데 기준 정사각형 400px JPEG로 잘라서 올림
+    async function uploadAvatar(file) {
+      const url = URL.createObjectURL(file);
+      let blob;
+      try {
+        const img = await new Promise((resolve, reject) => {
+          const el = new Image();
+          el.onload = () => resolve(el);
+          el.onerror = () => reject(new Error("사진을 읽지 못했어요"));
+          el.src = url;
+        });
+        const side = Math.min(img.naturalWidth, img.naturalHeight);
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 400;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, 400, 400);
+        ctx.drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 400, 400);
+        blob = await new Promise((resolve, reject) => {
+          canvas.toBlob(b => b ? resolve(b) : reject(new Error("사진 변환 실패")), "image/jpeg", 0.88);
+        });
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+
+      const name = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+        : Date.now().toString(36) + Math.random().toString(36).slice(2);
+      const path = `${name}.jpg`;
+      const res = await fetch(`${PROFILE_DB.url}/storage/v1/object/avatars/${path}`, {
+        method: "POST",
+        headers: { apikey: PROFILE_DB.key, "Content-Type": "image/jpeg" },
+        body: blob
+      });
+      if (!res.ok) throw new Error(`사진 올리기 실패 (${res.status})`);
+      return path;
+    }
+
+    function removeAvatarFile(path) {
+      if (!path) return;
+      fetch(`${PROFILE_DB.url}/storage/v1/object/avatars/${path}`, {
+        method: "DELETE",
+        headers: { apikey: PROFILE_DB.key }
+      }).catch(() => {});
+    }
+
+    // 프로필 사진을 누르면: 사진 변경 / 기본 이미지로
+    const profileMenu = document.getElementById("profileMenu");
+    const avatarInput = document.getElementById("avatarInput");
+    const profileNote = document.getElementById("profileNote");
+
+    function showProfileNote(text) {
+      profileNote.textContent = text;
+      profileNote.classList.toggle("hidden", !text);
+    }
+
+    document.getElementById("profileAvatar").addEventListener("click", function(event) {
+      event.stopPropagation();
+      if (!getCurrentUser()) return;
+      profileMenu.classList.toggle("hidden");
+    });
+
+    document.addEventListener("click", function(event) {
+      if (!event.target.closest("#profileMenu")) profileMenu.classList.add("hidden");
+    });
+
+    document.getElementById("avatarChange").addEventListener("click", function() {
+      profileMenu.classList.add("hidden");
+      avatarInput.click();
+    });
+
+    avatarInput.addEventListener("change", async function() {
+      const file = avatarInput.files[0];
+      avatarInput.value = "";
+      if (!file) return;
+
+      const oldPath = readAvatarCache();
+      showProfileNote("사진 올리는 중…");
+      let newPath = null;
+      try {
+        newPath = await uploadAvatar(file);
+        await saveMyAvatar(newPath);
+        writeAvatarCache(newPath);
+        fillAvatar(document.getElementById("profileAvatar"), newPath);
+        removeAvatarFile(oldPath);
+        showProfileNote("");
+      } catch (e) {
+        console.error(e);
+        removeAvatarFile(newPath);
+        showProfileNote("사진을 바꾸지 못했어요");
+      }
+    });
+
+    document.getElementById("avatarReset").addEventListener("click", async function() {
+      profileMenu.classList.add("hidden");
+      const oldPath = readAvatarCache();
+      try {
+        await saveMyAvatar("");
+        writeAvatarCache("");
+        fillAvatar(document.getElementById("profileAvatar"), "");
+        removeAvatarFile(oldPath);
+        showProfileNote("");
+      } catch (e) {
+        console.error(e);
+        showProfileNote("사진을 바꾸지 못했어요");
+      }
+    });
 
     // 로그아웃: 저장된 ID를 지우고 로그인 화면으로 / 로그인 안 됐으면 로그인 화면으로
     document.getElementById("profileAction").addEventListener("click", function() {

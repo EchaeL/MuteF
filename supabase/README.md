@@ -12,6 +12,8 @@ MuteF 사이트가 쓰는 Supabase 프로젝트(MuteFweb)의 데이터베이스 
 | `events` | `calender.html` | 일정 (제목, 날짜, 장소 이름/링크, 참여 인원, 메모) |
 | `posts` | `members.html`, `timeline.html` | 게시물 (작성자 ID, 제목, 사진 경로, 대표 여부, 올린 곳 `source`: `feed`면 피드+타임라인, `timeline`이면 타임라인만) |
 
-사진은 Storage 보관함 `post-images`(공개 읽기)에 저장.
+| `profiles` | 모든 페이지 사이드바, `timeline.html` | ID별 프로필 사진 경로 (`''`이면 기본 이미지) |
 
-공개(publishable) 키로 `events`, `posts`를 읽기·추가·수정·삭제할 수 있음 (아직 진짜 로그인이 없어서). 로그인을 붙이면 규칙을 좁힐 것.
+게시물 사진은 Storage 보관함 `post-images`, 프로필 사진은 `avatars`(둘 다 공개 읽기)에 저장.
+
+공개(publishable) 키로 `events`, `posts`, `profiles`를 읽기·추가·수정·삭제할 수 있음 (아직 진짜 로그인이 없어서). 로그인을 붙이면 규칙을 좁힐 것.
